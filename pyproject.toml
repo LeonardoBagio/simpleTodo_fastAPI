@@ -50,6 +50,9 @@ addopts = ['-p', 'no:warnings', '--cov=fast_zero', '--cov-context=test']
 
 [tool.taskipy.tasks]
 lint = 'ruff check'
+pre_format = 'ruff check --fix'
 format = 'ruff format'
 run = 'fastapi dev simple_todo/app.py'
+pre_test = 'task lint'
 test = 'pytest -s -x --cov=simple_todo -vv'
+post_test = 'coverage html'
