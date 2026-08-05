@@ -1,8 +1,12 @@
 from http import HTTPStatus
 
 from fastapi import FastAPI, HTTPException
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
 
+from simple_todo.models import User
 from simple_todo.schemas import Message, UserDB, UserPublic, UserSchema
+from simple_todo.settings import Settings
 
 app = FastAPI()
 
@@ -16,14 +20,31 @@ def read_root():
 
 @app.post('/users', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 def create_user(user: UserSchema):
-    user_with_id = UserDB(
-        **user.model_dump(),
-        id=len(database) + 1,
+    engine = create_engine(Settings().DATABASE_URL)
+    session = Session(engine)
+
+    db_user = session.scalar(
+        select(User).where(
+            (User.username == user.username) | (User.email == user.email)
+        )
     )
 
-    database.append(user_with_id)
+    if not db_user:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLIT, detail='Dados já existentes'
+        )
 
-    return user_with_id
+    db_user = User(
+        username=user.username,
+        email=user.email,
+        password=user.password,
+    )
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    return db_user
 
 
 @app.get('/users', status_code=HTTPStatus.OK, response_model=list[UserPublic])
