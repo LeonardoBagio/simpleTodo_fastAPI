@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from simple_todo.schemas import UserPublic
+
 
 def test_read_root(client):
     response = client.get('/')
@@ -23,21 +25,11 @@ def test_create_user(client):
     }
 
 
-def test_read_users(client):
-    user_data = {
-        'username': 'testuser',
-        'email': 'testuser@example.com',
-    }
-
+def test_read_users(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
     response = client.get('/users')
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == [
-        {
-            'username': user_data['username'],
-            'email': user_data['email'],
-            'id': 1,
-        }
-    ]
+    assert response.json() == [user_schema]
 
 
 def test_get_users(client):
