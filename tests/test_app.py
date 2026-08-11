@@ -32,14 +32,25 @@ def test_read_users(client, user):
     assert response.json() == [user_schema]
 
 
-def test_get_users(client):
-    response = client.get('/users')
+def test_get_user(client, user):
+    response = client.get(f'/users/{user.id}')
+
     assert response.status_code == HTTPStatus.OK
-    assert isinstance(response.json(), list)
-    assert len(response.json()) > 0
+    assert response.json() == {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+    }
 
 
-def test_update_user(client):
+def test_get_user_not_found(client):
+    response = client.get('/users/999')
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'User not found'}
+
+
+def test_update_user(client, user):
     user_data = {
         'username': 'updateduser',
         'email': 'updateduser@example.com',
@@ -72,7 +83,7 @@ def test_update_user_not_found(client):
     }
 
 
-def test_delete_user(client):
+def test_delete_user(client, user):
     response = client.delete('/users/1')
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
@@ -84,3 +95,18 @@ def test_delete_user_not_found(client):
     response = client.delete('/users/50')
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User with id 50 not found'}
+
+
+def test_update_integrity_error(client, user):
+    userExample = {
+        'username': 'joaozinho',
+        'email': 'joaozinho@example.com',
+        'password': 'password',
+    }
+
+    client.post('/users', json=userExample)
+
+    response = client.put(f'/users/{user.id}', json=userExample)
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Dados já existentes'}
