@@ -1,12 +1,14 @@
 from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from simple_todo.database import get_session
 from simple_todo.models import User
 from simple_todo.schemas import Message, UserPublic, UserSchema
+from simple_todo.security import get_password_hash, verify_password
 
 app = FastAPI()
 
@@ -33,7 +35,7 @@ def create_user(user: UserSchema, session=Depends(get_session)):
     db_user = User(
         username=user.username,
         email=user.email,
-        password=user.password,
+        password=get_password_hash(user.password),
     )
 
     session.add(db_user)
@@ -78,7 +80,7 @@ def update_user(user_id: int, user: UserSchema, session=Depends(get_session)):
 
     user_db.email = user.email
     user_db.username = user.username
-    user_db.password = user.password
+    user_db.password = get_password_hash(user.password)
 
     try:
         session.add(user_db)
@@ -108,3 +110,24 @@ def delete_user(user_id: int, session=Depends(get_session)):
     session.commit()
 
     return {'message': f'User with id {user_id} deleted successfully'}
+
+
+@app.post('/token')
+def login_for_acess_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session=Depends(get_session),
+):
+    user = session.scalar(select(User).where(User.email == form_data.username))
+
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Incorrect email or password',
+        )
+
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Incorrect email or password',
+        )
+    ...
