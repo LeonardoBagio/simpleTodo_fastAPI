@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from simple_todo.app import app
 from simple_todo.database import get_session
 from simple_todo.models import User, table_registry
+from simple_todo.security import get_password_hash
 
 
 @pytest.fixture
@@ -60,11 +61,26 @@ def mock_db_time():
 
 @pytest.fixture
 def user(session):
+    password = 'test'
+
     new_user = User(
-        username='testuser', email='testuser@example.com', password='test'
+        username='testuser',
+        email='testuser@example.com',
+        password=get_password_hash(password),
     )
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
 
+    new_user.clean_password = password
+
     return new_user
+
+
+@pytest.fixture
+def token(client, user):
+    response = client.post(
+        'token', data={'username': user.email, 'password': user.clean_password}
+    )
+
+    return response.json()['access_token']
