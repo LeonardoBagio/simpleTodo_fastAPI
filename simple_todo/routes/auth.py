@@ -1,8 +1,10 @@
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from simple_todo.database import get_session
 from simple_todo.models import User
@@ -13,12 +15,14 @@ from simple_todo.security import (
 )
 
 router = APIRouter(prefix='/auth', tags=['auth'])
+Session = Annotated[Session, Depends(get_session)]
+OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
 
 
 @router.post('/token', response_model=Token)
 def login_for_acess_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    session=Depends(get_session),
+    form_data: OAuth2Form,
+    session: Session,
 ):
     user = session.scalar(select(User).where(User.email == form_data.username))
 

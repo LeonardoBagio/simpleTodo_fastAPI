@@ -11,6 +11,7 @@ from simple_todo.app import app
 from simple_todo.database import get_session
 from simple_todo.models import User, table_registry
 from simple_todo.security import get_password_hash
+from simple_todo.settings import Settings
 
 
 @pytest.fixture
@@ -85,3 +86,8 @@ def token(client, user):
     )
 
     return response.json()['access_token']
+
+
+@pytest.fixture
+def settings():
+    return Settings()
