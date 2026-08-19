@@ -13,7 +13,7 @@ from simple_todo.database import get_session
 from simple_todo.models import User
 
 pwd_context = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 
 SECRET_KEY = 'MXlfwXPc7VyuIp2ccZEWu3BzR6daQJRMgEdfRqcKlMqCxbHpUlVsZQW'
