@@ -1,21 +1,25 @@
 from dataclasses import asdict
 from datetime import datetime
 
+import pytest
 from sqlalchemy import select
 
 from simple_todo.models import User
 
 
-def test_create_user(session, mock_db_time):
+@pytest.mark.asyncio
+async def test_create_user(session, mock_db_time):
     with mock_db_time(model=User, time=datetime.now()) as time:
         new_user = User(
             username='teste', email='teste@teste', password='secret'
         )
 
         session.add(new_user)
-        session.commit()
+        await session.commit()
 
-        user = session.scalar(select(User).where(User.username == 'teste'))
+        user = await session.scalar(
+            select(User).where(User.username == 'teste')
+        )
 
     assert asdict(user) == {
         'id': new_user.id,
