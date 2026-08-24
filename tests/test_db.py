@@ -3,7 +3,9 @@ from datetime import datetime
 
 import pytest
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from simple_todo.database import get_session
 from simple_todo.models import User
 
 
@@ -28,3 +30,9 @@ async def test_create_user(session, mock_db_time):
         'password': new_user.password,
         'created_at': time,
     }
+
+
+@pytest.mark.asyncio
+async def test_get_session():
+    async for session in get_session():
+        assert isinstance(session, AsyncSession)

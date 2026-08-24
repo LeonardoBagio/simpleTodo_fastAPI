@@ -93,3 +93,52 @@ def test_delete_user(client, user, token):
     assert response.json() == {
         'message': f'User with id {user.id} deleted successfully'
     }
+
+
+def test_create_user_conflict(client, user):
+    response = client.post(
+        '/users',
+        json={
+            'username': user.username,
+            'email': 'outro@example.com',
+            'password': 'testpassword',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Dados já existentes'}
+
+
+def test_get_user_forbidden(client, user, token):
+    response = client.get(
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permissions'}
+
+
+def test_update_user_forbidden(client, user, token):
+    response = client.put(
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'username': 'outrouser',
+            'email': 'outrouser@example.com',
+            'password': 'outrapassword',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permissions'}
+
+
+def test_delete_user_forbidden(client, user, token):
+    response = client.delete(
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permissions'}

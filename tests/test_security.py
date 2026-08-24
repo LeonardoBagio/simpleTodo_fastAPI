@@ -23,3 +23,25 @@ def test_jwt_invalid_token(client):
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.json() == {'detail': 'Could not validade credentials'}
+
+
+def test_get_current_user_no_sub(client):
+    token = create_access_token(data={'test': 'test'})
+
+    response = client.delete(
+        '/users/1', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Could not validade credentials'}
+
+
+def test_get_current_user_not_found(client):
+    token = create_access_token(data={'sub': 'ghost@example.com'})
+
+    response = client.delete(
+        '/users/1', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Could not validade credentials'}
