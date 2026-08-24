@@ -41,7 +41,7 @@ preview = true
 quote-style = 'single'
 
 [tool.coverage.run]
-core = "sysmon"
+concurrency = ["thread", "greenlet"]
 
 [tool.pytest.ini_options]
 pythonpath = ['.']
