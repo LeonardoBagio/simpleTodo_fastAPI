@@ -1,4 +1,4 @@
-# Título do Projeto/Curso
+# Curso de FastAPI 2025
 
 Este repositório contém o material do curso originalmente escrito e produzido por **Eduardo Mendes** ([@dunossauro](https://github.com/dunossauro)).
 
