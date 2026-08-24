@@ -38,7 +38,7 @@ async def session():
     async with engine.begin() as conn:
         await conn.run_sync(table_registry.metadata.create_all)
 
-    async with AsyncSession(engine) as session:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
 
     async with engine.begin() as conn:
@@ -63,8 +63,8 @@ def mock_db_time():
     return _mock_db_time
 
 
-@pytest.fixture
-def user(session):
+@pytest_asyncio.fixture
+async def user(session):
     password = 'test'
 
     new_user = User(
@@ -73,8 +73,8 @@ def user(session):
         password=get_password_hash(password),
     )
     session.add(new_user)
-    session.commit()
-    session.refresh(new_user)
+    await session.commit()
+    await session.refresh(new_user)
 
     new_user.clean_password = password
 

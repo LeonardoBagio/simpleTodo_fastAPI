@@ -43,7 +43,7 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-def get_current_user(
+async def get_current_user(
     session=Depends(get_session),
     token=Depends(oauth2_scheme),
 ):
@@ -62,7 +62,9 @@ def get_current_user(
     except PyJWTError:
         raise credentials_exception
 
-    user = session.scalar(select(User).where(User.email == subject_email))
+    user = await session.scalar(
+        select(User).where(User.email == subject_email)
+    )
 
     if not user:
         raise credentials_exception
