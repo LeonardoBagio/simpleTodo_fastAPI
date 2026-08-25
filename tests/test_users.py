@@ -68,20 +68,15 @@ def test_update_user(client, user, token):
     }
 
 
-def test_update_integrity_error(client, user, token):
-    other = UserFactory.build()
-    userExample = {
-        'username': other.username,
-        'email': other.email,
-        'password': other.password,
-    }
-
-    client.post('/users', json=userExample)
-
+def test_update_integrity_error(client, user, other_user, token):
     response = client.put(
         f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
-        json=userExample,
+        json={
+            'username': other_user.username,
+            'email': other_user.email,
+            'password': other_user.password,
+        },
     )
 
     assert response.status_code == HTTPStatus.CONFLICT
