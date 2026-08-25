@@ -1,20 +1,24 @@
 from http import HTTPStatus
 
 from simple_todo.schemas import UserPublic
+from tests.conftest import UserFactory
 
 
 def test_create_user(client):
-    user_data = {
-        'username': 'testuser',
-        'email': 'testuser@example.com',
-        'password': 'testpassword',
-    }
+    user_data = UserFactory.build()
 
-    response = client.post('/users', json=user_data)
+    response = client.post(
+        '/users',
+        json={
+            'username': user_data.username,
+            'email': user_data.email,
+            'password': user_data.password,
+        },
+    )
     assert response.status_code == HTTPStatus.CREATED
     assert response.json() == {
-        'username': user_data['username'],
-        'email': user_data['email'],
+        'username': user_data.username,
+        'email': user_data.email,
         'id': 1,
     }
 
@@ -44,31 +48,32 @@ def test_get_user(client, user, token):
 
 
 def test_update_user(client, user, token):
-    user_data = {
-        'username': 'updateduser',
-        'email': 'updateduser@example.com',
-        'password': 'updatedpassword',
-    }
+    user_data = UserFactory.build()
 
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
-        json=user_data,
+        json={
+            'username': user_data.username,
+            'email': user_data.email,
+            'password': user_data.password,
+        },
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'username': user_data['username'],
-        'email': user_data['email'],
-        'id': 1,
+        'username': user_data.username,
+        'email': user_data.email,
+        'id': user.id,
     }
 
 
 def test_update_integrity_error(client, user, token):
+    other = UserFactory.build()
     userExample = {
-        'username': 'joaozinho',
-        'email': 'joaozinho@example.com',
-        'password': 'password',
+        'username': other.username,
+        'email': other.email,
+        'password': other.password,
     }
 
     client.post('/users', json=userExample)
@@ -96,12 +101,13 @@ def test_delete_user(client, user, token):
 
 
 def test_create_user_conflict(client, user):
+    other = UserFactory.build()
     response = client.post(
         '/users',
         json={
             'username': user.username,
-            'email': 'outro@example.com',
-            'password': 'testpassword',
+            'email': other.email,
+            'password': other.password,
         },
     )
 
@@ -120,13 +126,14 @@ def test_get_user_forbidden(client, user, token):
 
 
 def test_update_user_forbidden(client, user, token):
+    user_data = UserFactory.build()
     response = client.put(
         f'/users/{user.id + 1}',
         headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': 'outrouser',
-            'email': 'outrouser@example.com',
-            'password': 'outrapassword',
+            'username': user_data.username,
+            'email': user_data.email,
+            'password': user_data.password,
         },
     )
 
@@ -138,6 +145,22 @@ def test_delete_user_forbidden(client, user, token):
     response = client.delete(
         f'/users/{user.id + 1}',
         headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permissions'}
+
+
+def test_update_user_with_wrong_user(client, other_user, token):
+    user_data = UserFactory.build()
+    response = client.put(
+        f'/users/{other_user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'username': user_data.username,
+            'email': user_data.email,
+            'password': user_data.password,
+        },
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
