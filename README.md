@@ -130,6 +130,8 @@ poetry run task format        # formata o código (ruff format)
 | `DELETE` | `/users/{user_id}`    | Remove usuário                        |  ✅  |
 | `POST`   | `/todo/`              | Cria uma tarefa                       |  ✅  |
 | `GET`    | `/todo/`              | Lista tarefas (filtros + paginação)   |  ✅  |
+| `PATCH`  | `/todo/{todo_id}`     | Atualiza parcialmente uma tarefa      |  ✅  |
+| `DELETE` | `/todo/{todo_id}`     | Remove uma tarefa                     |  ✅  |
 
 ### Filtros da listagem de tarefas (`GET /todo/`)
 
@@ -148,16 +150,37 @@ curl -H "Authorization: Bearer <TOKEN>" \
   "http://127.0.0.1:8000/todo/?state=doing&limit=5"
 ```
 
+### Atualização parcial de tarefa (`PATCH /todo/{todo_id}`)
+
+Diferente de um `PUT`, o `PATCH` aceita apenas os campos a serem alterados
+(`title`, `description` e/ou `state`) — os demais permanecem inalterados.
+
+```bash
+curl -X PATCH -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"state": "done"}' \
+  "http://127.0.0.1:8000/todo/1"
+```
+
 ## 🗂️ Estrutura do projeto
 
 ```
 simple_todo/
 ├── app.py            # instancia o FastAPI e registra os routers
 ├── database.py       # engine e sessão async do SQLAlchemy
-├── models.py         # modelos ORM (User, Todo, TodoState)
-├── schemas.py        # schemas Pydantic (entrada/saída)
 ├── security.py       # hash de senha e JWT
 ├── settings.py       # configurações via .env
+├── models/           # modelos ORM (pacote)
+│   ├── __init__.py   # reexporta table_registry, User, Todo, TodoState
+│   ├── registry.py   # registry() compartilhado pelos modelos
+│   ├── user.py       # modelo User
+│   └── todo.py       # modelo Todo + enum TodoState
+├── schemas/          # schemas Pydantic (pacote)
+│   ├── __init__.py   # reexporta todos os schemas
+│   ├── base.py       # schemas comuns (Message, Token, FilterPage)
+│   ├── user.py       # schemas de usuário (UserSchema, UserPublic, UserDB)
+│   └── todo.py       # schemas de tarefa (TodoSchema, TodoPublic, TodoList,
+│                     #                     TodoUpdate, FilterTodo)
 └── routes/
     ├── auth.py       # /auth
     ├── users.py      # /users
