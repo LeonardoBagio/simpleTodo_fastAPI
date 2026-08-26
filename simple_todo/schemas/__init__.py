@@ -4,6 +4,7 @@ from simple_todo.schemas.todo import (
     TodoList,
     TodoPublic,
     TodoSchema,
+    TodoUpdate,
 )
 from simple_todo.schemas.user import UserDB, UserPublic, UserSchema
 
@@ -17,5 +18,6 @@ __all__ = [
     'TodoSchema',
     'TodoPublic',
     'TodoList',
+    'TodoUpdate',
     'FilterTodo',
 ]

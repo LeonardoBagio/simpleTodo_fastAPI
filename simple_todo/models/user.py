@@ -1,9 +1,13 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from simple_todo.models.registry import table_registry
+
+if TYPE_CHECKING:
+    from simple_todo.models.todo import Todo
 
 
 @table_registry.mapped_as_dataclass
