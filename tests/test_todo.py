@@ -1,8 +1,9 @@
 from http import HTTPStatus
 
 import pytest
+from sqlalchemy import select
 
-from simple_todo.models import TodoState
+from simple_todo.models import Todo, TodoState
 from tests.conftest import TodoFactory
 
 
@@ -18,12 +19,13 @@ def test_create_todo(client, token):
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'id': 1,
-        'title': 'Test todo',
-        'description': 'Test todo description',
-        'state': 'draft',
-    }
+    data = response.json()
+    assert data['id'] == 1
+    assert data['title'] == 'Test todo'
+    assert data['description'] == 'Test todo description'
+    assert data['state'] == 'draft'
+    assert 'created_at' in data
+    assert 'updated_at' in data
 
 
 def test_create_todo_default_state(client, token):
@@ -101,6 +103,39 @@ async def test_list_todos_should_return_all_todos(
 
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()['todos']) == expected_todos
+
+
+@pytest.mark.asyncio
+async def test_list_todos_should_return_all_fields(
+    session, client, user, token, mock_db_time
+):
+    with mock_db_time(model=Todo) as time:
+        todo = TodoFactory.create(
+            user_id=user.id,
+            title='Full field todo',
+            description='Full field description',
+            state=TodoState.doing,
+        )
+        session.add(todo)
+        await session.commit()
+        await session.refresh(todo)
+
+    response = client.get(
+        '/todo/',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()['todos'] == [
+        {
+            'id': todo.id,
+            'title': 'Full field todo',
+            'description': 'Full field description',
+            'state': 'doing',
+            'created_at': time.isoformat(),
+            'updated_at': time.isoformat(),
+        }
+    ]
 
 
 @pytest.mark.asyncio
@@ -267,12 +302,11 @@ async def test_patch_todo_all_fields(session, client, user, token):
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'id': todo.id,
-        'title': 'New title',
-        'description': 'New description',
-        'state': 'done',
-    }
+    data = response.json()
+    assert data['id'] == todo.id
+    assert data['title'] == 'New title'
+    assert data['description'] == 'New description'
+    assert data['state'] == 'done'
 
 
 def test_patch_todo_not_found(client, token):
@@ -363,3 +397,15 @@ def test_delete_todo_without_token(client):
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.json() == {'detail': 'Not authenticated'}
+
+
+@pytest.mark.asyncio
+async def test_todo_state_out_of_enum(session, user):
+    todo = TodoFactory(user_id=user.id, state='invalid_state')
+    session.add(todo)
+    await session.commit()
+
+    # O Enum não valida a string na escrita; o erro é levantado ao ler de
+    # volta o valor, que não corresponde a nenhum membro de TodoState.
+    with pytest.raises(LookupError):
+        await session.scalar(select(Todo))
