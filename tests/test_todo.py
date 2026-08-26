@@ -228,3 +228,56 @@ async def test_list_todos_combined_filters(session, client, user, token):
     expected_todos = 2
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()['todos']) == expected_todos
+
+
+@pytest.mark.asyncio
+async def test_delete_todo(session, client, user, token):
+    todo = TodoFactory(user_id=user.id)
+    session.add(todo)
+    await session.commit()
+    await session.refresh(todo)
+
+    response = client.delete(
+        f'/todo/{todo.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'message': 'Task has been deleted successfully.'
+    }
+
+
+def test_delete_todo_not_found(client, token):
+    response = client.delete(
+        '/todo/999',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Task not found.'}
+
+
+@pytest.mark.asyncio
+async def test_delete_other_user_todo(
+    session, client, user, other_user, token
+):
+    todo = TodoFactory(user_id=other_user.id)
+    session.add(todo)
+    await session.commit()
+    await session.refresh(todo)
+
+    response = client.delete(
+        f'/todo/{todo.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Task not found.'}
+
+
+def test_delete_todo_without_token(client):
+    response = client.delete('/todo/1')
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Not authenticated'}
