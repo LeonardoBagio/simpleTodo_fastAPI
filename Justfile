@@ -17,13 +17,17 @@ default:
 create:
     @printf "{{ _blue }}🚀  Buildando as imagens e subindo os containers...{{ _reset }}\n"
     docker compose up -d --build
-    @printf "{{ _green }}✅  Pronto! API disponível em http://localhost:8000 (docs em /docs){{ _reset }}\n"
+    @printf "{{ _green }}✅  Pronto!{{ _reset }}\n"
+    @printf "{{ _green }}    🖥️   Front-end (painel): http://localhost:3000{{ _reset }}\n"
+    @printf "{{ _green }}    🔌  API:  http://localhost:8000 (docs em /docs){{ _reset }}\n"
 
 # ▶️  Inicia os containers já criados
 start:
     @printf "{{ _blue }}▶️   Iniciando os containers...{{ _reset }}\n"
     docker compose start
-    @printf "{{ _green }}✅  Containers em execução em http://localhost:8000{{ _reset }}\n"
+    @printf "{{ _green }}✅  Containers em execução:{{ _reset }}\n"
+    @printf "{{ _green }}    🖥️   Front-end (painel): http://localhost:3000{{ _reset }}\n"
+    @printf "{{ _green }}    🔌  API:  http://localhost:8000{{ _reset }}\n"
 
 # ⏹️  Para os containers sem removê-los
 stop:
@@ -36,6 +40,18 @@ down:
     @printf "{{ _yellow }}🧹  Removendo containers e rede...{{ _reset }}\n"
     docker compose down
     @printf "{{ _green }}✅  Ambiente removido (volume do banco preservado).{{ _reset }}\n"
+
+# 🎨  Formata o código com o Ruff
+format:
+    @printf "{{ _blue }}🎨  Formatando o código com o Ruff...{{ _reset }}\n"
+    poetry run task format
+    @printf "{{ _green }}✅  Código formatado.{{ _reset }}\n"
+
+# 🧪  Roda lint + testes (Postgres via testcontainers) com cobertura
+test:
+    @printf "{{ _blue }}🧪  Rodando lint e testes (Postgres via testcontainers)...{{ _reset }}\n"
+    poetry run task test
+    @printf "{{ _green }}✅  Testes finalizados. Cobertura em htmlcov/index.html{{ _reset }}\n"
 
 # 📜  Acompanha os logs da aplicação
 logs:
