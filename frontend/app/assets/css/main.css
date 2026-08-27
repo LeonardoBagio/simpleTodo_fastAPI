@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --steel-950: #141619;
+  --steel-900: #191c20;
+  --steel-850: #1e2228;
+  --steel-800: #23272d;
+  --steel-700: #2c313a;
+  --steel-600: #373d47;
+  --steel-500: #464d59;
+  --enamel: #e9e3d4;
+  --enamel-dim: #a9b1bd;
+  --lamp-draft: #7a8593;
+  --lamp-todo: #4a9fd4;
+  --lamp-doing: #f2a41c;
+  --lamp-done: #4bbd6b;
+  --lamp-trash: #df5140;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    background-color: var(--steel-950);
+  }
+
+  body {
+    background-color: var(--steel-900);
+    /* Brushed-steel grain + faint vertical seam of a bolted console panel */
+    background-image:
+      linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.012) 0 1px,
+        transparent 1px 3px
+      ),
+      radial-gradient(
+        140% 120% at 50% -10%,
+        rgba(90, 104, 122, 0.14),
+        transparent 60%
+      );
+    background-attachment: fixed;
+    color: var(--enamel);
+    font-family: Saira, system-ui, sans-serif;
+    font-feature-settings: 'tnum' 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+  }
+
+  /* --- Browser surfaces themed from the console palette --- */
+  ::selection {
+    background: rgba(242, 164, 28, 0.32);
+    color: #fff;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--steel-500) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--steel-950);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--steel-600);
+    border: 3px solid var(--steel-950);
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--steel-500);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--lamp-doing);
+    outline-offset: 2px;
+  }
+
+  input,
+  textarea,
+  select {
+    caret-color: var(--lamp-doing);
+  }
+
+  a {
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+}
+
+@layer components {
+  /* Diagonal hazard stripes — the console's signature rule */
+  .hazard-rule {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--lamp-doing) 0 10px,
+      var(--steel-900) 10px 20px
+    );
+  }
+
+  /* Engraved panel plate — a raised metal placard */
+  .plate {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 40%),
+      var(--steel-800);
+    border: 1px solid var(--steel-600);
+    border-top-color: var(--steel-500);
+    border-radius: 6px;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.4) inset,
+      0 2px 4px rgba(0, 0, 0, 0.35);
+  }
+
+  /* Rivet dot — decorative panel fastener */
+  .rivet {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: radial-gradient(
+      circle at 35% 30%,
+      var(--steel-400, #5a6270),
+      var(--steel-700) 70%
+    );
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Engraved label lettering */
+  .engraved {
+    font-family: '"Saira Condensed"', sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+  }
+
+  /* Console button — machined, pressable */
+  .btn-console {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 5px;
+    padding: 0.6rem 1.1rem;
+    transition:
+      transform 0.12s cubic-bezier(0.2, 0, 0.2, 1),
+      box-shadow 0.12s ease,
+      filter 0.12s ease;
+  }
+  .btn-console:active {
+    transform: translateY(1px);
+  }
+  .btn-amber {
+    color: #241a05;
+    background: linear-gradient(180deg, #f7b73f, var(--lamp-doing));
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 6px 16px -8px rgba(242, 164, 28, 0.8),
+      0 2px 4px rgba(0, 0, 0, 0.4);
+  }
+  .btn-amber:hover {
+    filter: brightness(1.06);
+  }
+  .btn-steel {
+    color: var(--enamel);
+    background: linear-gradient(180deg, var(--steel-600), var(--steel-700));
+    border: 1px solid var(--steel-500);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.06) inset,
+      0 2px 4px rgba(0, 0, 0, 0.35);
+  }
+  .btn-steel:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Console form field */
+  .field {
+    width: 100%;
+    background: var(--steel-950);
+    border: 1px solid var(--steel-600);
+    border-radius: 5px;
+    color: var(--enamel);
+    padding: 0.62rem 0.8rem;
+    font-family: Saira, sans-serif;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) inset;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .field::placeholder {
+    color: var(--enamel-dim);
+    opacity: 0.7;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--lamp-doing);
+    box-shadow:
+      0 2px 5px rgba(0, 0, 0, 0.3) inset,
+      0 0 0 3px rgba(242, 164, 28, 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

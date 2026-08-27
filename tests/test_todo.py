@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 
 from simple_todo.models import Todo, TodoState
 from tests.conftest import TodoFactory
@@ -321,9 +321,7 @@ def test_patch_todo_not_found(client, token):
 
 
 @pytest.mark.asyncio
-async def test_patch_other_user_todo(
-    session, client, user, other_user, token
-):
+async def test_patch_other_user_todo(session, client, user, other_user, token):
     todo = TodoFactory(user_id=other_user.id)
     session.add(todo)
     await session.commit()
@@ -403,9 +401,9 @@ def test_delete_todo_without_token(client):
 async def test_todo_state_out_of_enum(session, user):
     todo = TodoFactory(user_id=user.id, state='invalid_state')
     session.add(todo)
-    await session.commit()
 
-    # O Enum não valida a string na escrita; o erro é levantado ao ler de
-    # volta o valor, que não corresponde a nenhum membro de TodoState.
-    with pytest.raises(LookupError):
-        await session.scalar(select(Todo))
+    # No PostgreSQL o tipo ENUM é validado pelo banco na escrita: um valor
+    # fora de TodoState é rejeitado já no commit (invalid input value for
+    # enum todostate).
+    with pytest.raises(DBAPIError):
+        await session.commit()

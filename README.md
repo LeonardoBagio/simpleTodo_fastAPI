@@ -12,7 +12,7 @@ partir do curso [FastAPI do Zero](https://github.com/dunossauro) (ver
 - CRUD de tarefas (todos) vinculadas ao usuário autenticado
 - Listagem de tarefas com **filtros** (título, descrição, estado) e **paginação**
 - Migrações de banco com **Alembic**
-- Ambiente containerizado com **Docker Compose** (app + PostgreSQL)
+- Ambiente containerizado com **Docker Compose** (front + app + PostgreSQL)
 - Atalhos de gerenciamento com **just**
 - Suíte de testes com **pytest** (async) e cobertura 100%
 
@@ -26,45 +26,66 @@ partir do curso [FastAPI do Zero](https://github.com/dunossauro) (ver
 | Validação    | Pydantic / pydantic-settings          |
 | Auth         | PyJWT + pwdlib (Argon2)               |
 | Migrações    | Alembic                               |
+| **Front-end**| **Nuxt 4 + TypeScript + Tailwind + Pinia** |
 | Container    | Docker + Docker Compose               |
 | Testes       | pytest, pytest-asyncio, factory-boy   |
 | Lint/Format  | Ruff                                  |
 | Task runner  | Taskipy / just                        |
 
-## 🐳 Início rápido com Docker (recomendado)
+## 🖥️ Front-end (painel "Andon")
 
-A forma mais simples de subir a aplicação com o PostgreSQL. Requer
-**[Docker](https://docs.docker.com/get-docker/)**,
-**[Docker Compose](https://docs.docker.com/compose/)** e
-**[just](https://github.com/casey/just)**.
+Uma SPA/SSR em **Nuxt 4** (pasta [`frontend/`](frontend/)) que consome esta API.
+A interface é um **painel de controle industrial**: cada tarefa é uma placa com
+uma **lâmpada de estado** (rascunho / a fazer / fazendo / concluída / descarte).
+
+Segurança de nível produto: o front usa um **BFF** (server routes do Nuxt) que
+guarda o token JWT num cookie **httpOnly** (fora do JavaScript) e faz o *refresh*
+de forma transparente. Como o navegador só fala com o próprio Nuxt, **não é
+preciso configurar CORS** no FastAPI. Telas: login, cadastro, painel de tarefas
+(CRUD + filtros + estados) e conta. Detalhes do sistema visual em
+[`frontend/DESIGN.md`](frontend/DESIGN.md).
+
+## 🚀 Instalação e execução (Docker + `just`)
+
+A stack inteira — **front-end, API e banco** — sobe em containers. A única
+ferramenta de operação necessária é o **`just`**: nada de instalar Node, Python
+ou Poetry na máquina.
+
+**Pré-requisitos:** [Docker](https://docs.docker.com/get-docker/) +
+[Docker Compose](https://docs.docker.com/compose/) e
+[just](https://github.com/casey/just).
 
 ```bash
-# 1. Clone o repositório
 git clone https://github.com/<seu-usuario>/simpleTodo_fastAPI.git
 cd simpleTodo_fastAPI
-
-# 2. (Opcional) Ajuste as variáveis de ambiente
-cp .env.example .env
-
-# 3. Faça o build e suba os containers (app + banco)
-just create
+cp .env.example .env   # opcional: ajuste as variáveis
+just create            # build + sobe TUDO (front + app + banco)
 ```
 
-A aplicação sobe em http://localhost:8000 (docs em `/docs`). As migrações do Alembic
-são aplicadas automaticamente na inicialização do container (via `entrypoint.sh`).
+Pronto. Sobem três serviços:
 
-### Atalhos do `just`
+- 🖥️  **Front-end (painel):** http://localhost:3000
+- 🔌  **API:** http://localhost:8000 (docs em `/docs`)
+- 🐘  **PostgreSQL:** porta 5432
 
-| Comando       | Ação                                                        |
-| ------------- | ----------------------------------------------------------- |
-| `just create` | Build das imagens + cria e sobe os containers (background)  |
-| `just start`  | Inicia os containers já criados                             |
-| `just stop`   | Para os containers (sem removê-los)                         |
-| `just down`   | Remove containers e rede (mantém o volume do banco)         |
-| `just logs`   | Acompanha os logs da aplicação                              |
+As migrações do Alembic rodam **automaticamente** ao subir a API
+(`entrypoint.sh`). Depois de criado, gerencie tudo com um único comando:
 
-> Os dados do PostgreSQL persistem no volume `pgdata`, sobrevivendo a `stop`/`start` e
-> `down`. Para apagar tudo, remova o volume: `docker compose down -v`.
+| Comando       | Ação                                                         |
+| ------------- | ------------------------------------------------------------ |
+| `just create` | **Instalação:** build das imagens + cria e sobe os containers |
+| `just start`  | Sobe os containers já criados (front + app + banco) juntos   |
+| `just stop`   | Para os containers (sem removê-los)                          |
+| `just down`   | Remove containers e rede (mantém o volume do banco)          |
+| `just logs`   | Acompanha os logs da aplicação                               |
+| `just status` | Mostra o status dos containers                               |
+
+> Os dados do PostgreSQL persistem no volume `pgdata`, sobrevivendo a
+> `stop`/`start` e `down`. Para apagar tudo, remova o volume:
+> `docker compose down -v`.
+>
+> As seções abaixo (Poetry, migrações locais, etc.) são **opcionais** — só
+> valem para desenvolver o back-end fora do Docker.
 
 ## 📋 Pré-requisitos (execução local, sem Docker)
 
@@ -72,7 +93,10 @@ são aplicadas automaticamente na inicialização do container (via `entrypoint.
 - **[Poetry](https://python-poetry.org/docs/#installation)** para gerenciamento de dependências
 - Um **PostgreSQL** acessível (por exemplo, o do `docker compose`, exposto em `localhost:5432`)
 
-## 🚀 Instalação (local)
+## 🚀 Instalação local do back-end (opcional, sem Docker)
+
+> Só é necessário se você quiser rodar o back-end fora do Docker. Para uso
+> normal, o `just create` acima já resolve tudo.
 
 ```bash
 # 1. Clone o repositório
@@ -233,10 +257,15 @@ simple_todo/
     ├── auth.py       # /auth
     ├── users.py      # /users
     └── todo.py       # /todo
+frontend/             # painel Nuxt 4 (SPA/SSR) — consome a API via BFF
+├── app/              # pages, components, stores, layouts, composables
+├── server/           # rotas BFF (auth httpOnly + proxy autenticado)
+├── Dockerfile        # imagem do front-end (Node 22)
+└── DESIGN.md         # sistema visual do painel "Andon"
 tests/                # suíte de testes (pytest)
 migrations/           # migrações do Alembic
-Dockerfile            # imagem da aplicação
-docker-compose.yml    # orquestração (app + PostgreSQL)
+Dockerfile            # imagem da aplicação (API)
+docker-compose.yml    # orquestração (front + app + PostgreSQL)
 entrypoint.sh         # roda as migrações e sobe a API no container
 Justfile              # atalhos de gerenciamento (just create/start/stop)
 ```
