@@ -1,8 +1,9 @@
 # Simple Todo — FastAPI
 
 API de lista de tarefas (todos) construída com **FastAPI**, **SQLAlchemy 2 (async)** e
-**Pydantic**, com autenticação via **JWT**. Projeto desenvolvido a partir do curso
-[FastAPI do Zero](https://github.com/dunossauro) (ver [Créditos](#-créditos-e-licença)).
+**Pydantic**, com autenticação via **JWT** e banco **PostgreSQL**. Projeto desenvolvido a
+partir do curso [FastAPI do Zero](https://github.com/dunossauro) (ver
+[Créditos](#-créditos-e-licença)).
 
 ## ✨ Funcionalidades
 
@@ -11,27 +12,67 @@ API de lista de tarefas (todos) construída com **FastAPI**, **SQLAlchemy 2 (asy
 - CRUD de tarefas (todos) vinculadas ao usuário autenticado
 - Listagem de tarefas com **filtros** (título, descrição, estado) e **paginação**
 - Migrações de banco com **Alembic**
+- Ambiente containerizado com **Docker Compose** (app + PostgreSQL)
+- Atalhos de gerenciamento com **just**
 - Suíte de testes com **pytest** (async) e cobertura 100%
 
 ## 🧰 Stack
 
-| Camada       | Ferramenta                          |
-| ------------ | ----------------------------------- |
-| Web/API      | FastAPI                             |
-| ORM          | SQLAlchemy 2 (async) + aiosqlite    |
-| Validação    | Pydantic / pydantic-settings        |
-| Auth         | PyJWT + pwdlib (Argon2)             |
-| Migrações    | Alembic                             |
-| Testes       | pytest, pytest-asyncio, factory-boy |
-| Lint/Format  | Ruff                                |
-| Task runner  | Taskipy                             |
+| Camada       | Ferramenta                            |
+| ------------ | ------------------------------------- |
+| Web/API      | FastAPI                               |
+| ORM          | SQLAlchemy 2 (async) + psycopg        |
+| Banco        | PostgreSQL 16                         |
+| Validação    | Pydantic / pydantic-settings          |
+| Auth         | PyJWT + pwdlib (Argon2)               |
+| Migrações    | Alembic                               |
+| Container    | Docker + Docker Compose               |
+| Testes       | pytest, pytest-asyncio, factory-boy   |
+| Lint/Format  | Ruff                                  |
+| Task runner  | Taskipy / just                        |
 
-## 📋 Pré-requisitos
+## 🐳 Início rápido com Docker (recomendado)
+
+A forma mais simples de subir a aplicação com o PostgreSQL. Requer
+**[Docker](https://docs.docker.com/get-docker/)**,
+**[Docker Compose](https://docs.docker.com/compose/)** e
+**[just](https://github.com/casey/just)**.
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/<seu-usuario>/simpleTodo_fastAPI.git
+cd simpleTodo_fastAPI
+
+# 2. (Opcional) Ajuste as variáveis de ambiente
+cp .env.example .env
+
+# 3. Faça o build e suba os containers (app + banco)
+just create
+```
+
+A aplicação sobe em http://localhost:8000 (docs em `/docs`). As migrações do Alembic
+são aplicadas automaticamente na inicialização do container (via `entrypoint.sh`).
+
+### Atalhos do `just`
+
+| Comando       | Ação                                                        |
+| ------------- | ----------------------------------------------------------- |
+| `just create` | Build das imagens + cria e sobe os containers (background)  |
+| `just start`  | Inicia os containers já criados                             |
+| `just stop`   | Para os containers (sem removê-los)                         |
+| `just down`   | Remove containers e rede (mantém o volume do banco)         |
+| `just logs`   | Acompanha os logs da aplicação                              |
+
+> Os dados do PostgreSQL persistem no volume `pgdata`, sobrevivendo a `stop`/`start` e
+> `down`. Para apagar tudo, remova o volume: `docker compose down -v`.
+
+## 📋 Pré-requisitos (execução local, sem Docker)
 
 - **Python 3.12+**
 - **[Poetry](https://python-poetry.org/docs/#installation)** para gerenciamento de dependências
+- Um **PostgreSQL** acessível (por exemplo, o do `docker compose`, exposto em `localhost:5432`)
 
-## 🚀 Instalação
+## 🚀 Instalação (local)
 
 ```bash
 # 1. Clone o repositório
@@ -49,19 +90,26 @@ cp .env.example .env
 
 O arquivo `.env` é lido por `simple_todo/settings.py`:
 
-| Variável                      | Descrição                                | Exemplo                             |
-| ----------------------------- | ---------------------------------------- | ----------------------------------- |
-| `DATABASE_URL`                | URL de conexão do banco                  | `sqlite+aiosqlite:///./database.db` |
-| `SECRET_KEY`                  | Chave usada para assinar os tokens JWT   | `secret_key`                        |
-| `ALGORITHM`                   | Algoritmo de assinatura do JWT           | `HS256`                             |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Validade do access token (em minutos)    | `30`                                |
+| Variável                      | Descrição                                | Exemplo                                                  |
+| ----------------------------- | ---------------------------------------- | -------------------------------------------------------- |
+| `DATABASE_URL`                | URL de conexão do banco                  | `postgresql+psycopg://app:app@localhost:5432/simple_todo` |
+| `SECRET_KEY`                  | Chave usada para assinar os tokens JWT   | `secret_key`                                             |
+| `ALGORITHM`                   | Algoritmo de assinatura do JWT           | `HS256`                                                  |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Validade do access token (em minutos)    | `30`                                                     |
+| `POSTGRES_USER`               | Usuário do container PostgreSQL          | `app`                                                    |
+| `POSTGRES_PASSWORD`           | Senha do container PostgreSQL            | `app`                                                    |
+| `POSTGRES_DB`                 | Nome do banco do container PostgreSQL    | `simple_todo`                                            |
 
 > ⚠️ **Importante:** o projeto usa engine assíncrona (`create_async_engine`), então o
-> `DATABASE_URL` precisa de um driver async. Para SQLite use
-> `sqlite+aiosqlite:///./database.db` (e **não** `sqlite:///./database.db`).
-> Em produção, defina uma `SECRET_KEY` forte e única.
+> `DATABASE_URL` precisa de um driver async — para PostgreSQL use o prefixo
+> `postgresql+psycopg://`. As variáveis `POSTGRES_*` são consumidas pelo `docker-compose`
+> para provisionar o banco. Em produção, defina uma `SECRET_KEY` forte e única.
 
 ## 🗄️ Banco de dados (migrações)
+
+> Com Docker, as migrações rodam **automaticamente** ao subir o container
+> (`entrypoint.sh` executa `alembic upgrade head`). Os passos abaixo são para execução
+> local sem Docker.
 
 Aplique as migrações antes de subir a aplicação:
 
@@ -75,7 +123,7 @@ Para criar uma nova migração após alterar os modelos:
 poetry run alembic revision --autogenerate -m "descricao da mudanca"
 ```
 
-## ▶️ Executando o projeto
+## ▶️ Executando localmente (sem Docker)
 
 ```bash
 # Modo desenvolvimento (com reload)
@@ -187,6 +235,10 @@ simple_todo/
     └── todo.py       # /todo
 tests/                # suíte de testes (pytest)
 migrations/           # migrações do Alembic
+Dockerfile            # imagem da aplicação
+docker-compose.yml    # orquestração (app + PostgreSQL)
+entrypoint.sh         # roda as migrações e sobe a API no container
+Justfile              # atalhos de gerenciamento (just create/start/stop)
 ```
 
 ## 🙏 Créditos e Licença
