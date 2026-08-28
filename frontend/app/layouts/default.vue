@@ -98,16 +98,6 @@ async function logout() {
     <main class="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-12">
       <slot />
     </main>
-
-    <!-- Dark footer (portfolio) -->
-    <footer class="mt-8 bg-black">
-      <div
-        class="mx-auto flex max-w-[1120px] flex-wrap items-center gap-3 px-4 py-6 text-[11px] text-white/45 sm:px-6"
-      >
-        <Wordmark tone="dark" compact />
-        <span class="ml-auto engraved tracking-[0.14em]">FastAPI · Nuxt · JWT</span>
-      </div>
-    </footer>
   </div>
 </template>
 

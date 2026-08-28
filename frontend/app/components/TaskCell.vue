@@ -1,65 +1,70 @@
 <script setup lang="ts">
-import type { TodoPublic, TodoState } from '~/types/api'
+import type { TodoPublic } from '~/types/api'
 
 const props = defineProps<{ todo: TodoPublic; busy?: boolean }>()
 const emit = defineEmits<{
   (e: 'advance', t: TodoPublic): void
-  (e: 'state', payload: { id: number; state: TodoState }): void
+  (e: 'state', payload: { id: number; status_id: number }): void
   (e: 'edit', t: TodoPublic): void
   (e: 'remove', t: TodoPublic): void
 }>()
 
-const meta = computed(() => stateMeta(props.todo.state))
-const isDoing = computed(() => props.todo.state === 'doing')
-const isTerminal = computed(
-  () => props.todo.state === 'done' || props.todo.state === 'trash',
+const catalog = useCatalogStore()
+
+const status = computed(() => catalog.statusById[props.todo.status_id])
+const category = computed(() =>
+  props.todo.category_id != null
+    ? catalog.categoryById[props.todo.category_id]
+    : undefined,
 )
-const dimmed = computed(() => props.todo.state === 'trash')
+
+const isActive = computed(() => status.value?.group === 'em_andamento')
+const isDone = computed(() => status.value?.code === 'concluido')
+
+// Próximo passo do fluxo de avanço (null quando já concluído).
+const nextCode = computed(() => advanceCode(status.value?.code ?? ''))
+const nextLabel = computed(() =>
+  nextCode.value ? catalog.statusByCode[nextCode.value]?.label : '',
+)
+
+const confirming = ref(false)
+
+const accent = computed(() => status.value?.color ?? '#999999')
 </script>
 
 <template>
   <article
     class="group relative rounded-md border bg-surface p-5 transition-all duration-300"
     :class="[
-      isDoing
-        ? 'border-lamp-doing/60 -translate-y-0.5'
-        : 'card-lift border-black/[0.07] shadow-sm',
-      dimmed ? 'opacity-55 hover:opacity-100' : '',
+      isActive
+        ? '-translate-y-0.5'
+        : 'card-lift border-black/[0.07] shadow-sm hover:-translate-y-1',
     ]"
     :style="
-      isDoing
+      isActive
         ? {
-            background:
-              'linear-gradient(180deg, rgba(242,164,28,0.09), #ffffff 55%)',
-            boxShadow:
-              '0 18px 40px -16px rgba(0,0,0,0.18), 0 0 26px -8px rgba(242,164,28,0.5)',
+            borderColor: accent + '80',
+            background: `linear-gradient(180deg, ${accent}14, #ffffff 55%)`,
+            boxShadow: `0 16px 36px -16px rgba(0,0,0,0.18), 0 0 22px -8px ${accent}80`,
           }
         : {}
     "
   >
-    <!-- Header: state badge + quick actions -->
+    <!-- Header: inline status dropdown + quick actions -->
     <div class="flex items-start justify-between gap-3">
-      <span class="pill" :title="meta.label">
-        <AndonLamp :state="todo.state" :size="9" />
-        {{ meta.status }}
-      </span>
+      <StateSelect
+        :model-value="todo.status_id"
+        @update:model-value="(id) => emit('state', { id: todo.id, status_id: id })"
+      />
 
-      <div class="flex items-center gap-1">
+      <div v-if="!confirming" class="flex items-center gap-1">
         <button
-          v-if="!isTerminal"
+          v-if="nextCode"
           type="button"
           class="grid h-8 w-8 place-items-center rounded-md text-muted transition-colors hover:bg-cloud hover:text-ink disabled:opacity-40"
           :disabled="busy"
-          :title="`Avançar para ${
-            stateMeta(
-              todo.state === 'draft'
-                ? 'todo'
-                : todo.state === 'todo'
-                  ? 'doing'
-                  : 'done',
-            ).label
-          }`"
-          aria-label="Avançar estado"
+          :title="`Avançar para ${nextLabel}`"
+          aria-label="Avançar status"
           @click="emit('advance', todo)"
         >
           <Icon name="arrow" :size="17" />
@@ -77,23 +82,40 @@ const dimmed = computed(() => props.todo.state === 'trash')
           type="button"
           class="grid h-8 w-8 place-items-center rounded-md text-muted transition-colors hover:bg-lamp-trash/10 hover:text-lamp-trash disabled:opacity-40"
           :disabled="busy"
-          :title="todo.state === 'trash' ? 'Excluir definitivamente' : 'Enviar ao descarte'"
-          aria-label="Descartar tarefa"
-          @click="emit('remove', todo)"
+          title="Excluir tarefa"
+          aria-label="Excluir tarefa"
+          @click="confirming = true"
         >
           <Icon name="trash" :size="16" />
+        </button>
+      </div>
+
+      <!-- Confirmação de exclusão (hard-delete) -->
+      <div v-else class="flex items-center gap-1.5">
+        <span class="engraved text-[9px] text-muted">Excluir?</span>
+        <button
+          type="button"
+          class="rounded-md px-2 py-1 font-head text-[10px] font-bold uppercase tracking-[0.06em] text-white"
+          style="background: #df5140"
+          :disabled="busy"
+          @click="emit('remove', todo)"
+        >
+          Sim
+        </button>
+        <button
+          type="button"
+          class="rounded-md border border-black/15 px-2 py-1 font-head text-[10px] font-bold uppercase tracking-[0.06em] text-muted hover:text-ink"
+          @click="confirming = false"
+        >
+          Não
         </button>
       </div>
     </div>
 
     <!-- Title + description -->
     <h3
-      class="mt-4 font-head text-[16px] font-bold uppercase tracking-[0.02em] leading-snug"
-      :class="
-        todo.state === 'done'
-          ? 'text-muted line-through decoration-lamp-done/70'
-          : 'text-ink'
-      "
+      class="mt-3.5 font-head text-[16px] font-bold uppercase tracking-[0.02em] leading-snug"
+      :class="isDone ? 'text-muted line-through decoration-lamp-done/70' : 'text-ink'"
     >
       {{ todo.title }}
     </h3>
@@ -104,23 +126,24 @@ const dimmed = computed(() => props.todo.state === 'trash')
       {{ todo.description }}
     </p>
 
-    <!-- Meta -->
-    <div class="mt-4 flex items-center gap-3 text-[11px] text-muted">
-      <span class="font-head font-bold tracking-wide tabular-nums"
-        >#{{ String(todo.id).padStart(4, '0') }}</span
+    <!-- Footer: category + issue ... last edit -->
+    <div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span
+        v-if="category"
+        class="inline-flex items-center rounded-pill px-2.5 py-0.5 font-head text-[11px] font-semibold text-white"
+        :style="{ background: category.color }"
+        >{{ category.label }}</span
       >
-      <span class="h-3 w-px bg-black/10" />
-      <span>{{ fmtDate(todo.updated_at) }}</span>
-    </div>
-
-    <!-- State rail, revealed on hover/focus for precise control -->
-    <div
-      class="mt-4 overflow-hidden opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100"
-    >
-      <StateSelect
-        :model-value="todo.state"
-        @update:model-value="(s) => emit('state', { id: todo.id, state: s })"
-      />
+      <span
+        v-if="todo.issue"
+        class="inline-flex items-center rounded-pill bg-cloud px-2.5 py-0.5 font-head text-[11px] font-bold text-ink"
+        >{{ todo.issue.startsWith('#') ? todo.issue : `#${todo.issue}` }}</span
+      >
+      <span
+        class="ml-auto font-head text-[11px] font-semibold tabular-nums text-muted"
+        :title="`Última edição: ${fmtDate(todo.updated_at)}`"
+        >{{ fmtDate(todo.updated_at) }}</span
+      >
     </div>
   </article>
 </template>

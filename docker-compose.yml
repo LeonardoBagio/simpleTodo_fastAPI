@@ -2,7 +2,13 @@ services:
   db:
     image: postgres:16
     container_name: simple_todo_db
+    # Fuso horário do servidor Postgres = Brasília. Assim func.now(), gravado nas
+    # colunas timestamp (sem tz) de created_at/updated_at, reflete o horário local
+    # de Brasília em vez de UTC.
+    command: ["postgres", "-c", "timezone=America/Sao_Paulo"]
     environment:
+      TZ: America/Sao_Paulo
+      PGTZ: America/Sao_Paulo
       POSTGRES_USER: ${POSTGRES_USER:-app}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
       POSTGRES_DB: ${POSTGRES_DB:-simple_todo}

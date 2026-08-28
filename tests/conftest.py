@@ -2,18 +2,18 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import factory
-import factory.fuzzy
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy import event
+from sqlalchemy import event, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
 from simple_todo.app import app
 from simple_todo.database import get_session
-from simple_todo.models import Todo, TodoState, User, table_registry
+from simple_todo.models import Category, Status, Todo, User, table_registry
 from simple_todo.security import get_password_hash
+from simple_todo.seeds import CATALOG_CATEGORIES, CATALOG_STATUSES
 from simple_todo.settings import Settings
 
 
@@ -43,10 +43,31 @@ async def session(engine):
         await conn.run_sync(table_registry.metadata.create_all)
 
     async with AsyncSession(engine, expire_on_commit=False) as session:
+        # Cadastros globais são dados de referência: sempre presentes.
+        session.add_all(Status(**row) for row in CATALOG_STATUSES)
+        session.add_all(Category(**row) for row in CATALOG_CATEGORIES)
+        await session.commit()
+
         yield session
 
     async with engine.begin() as conn:
         await conn.run_sync(table_registry.metadata.drop_all)
+
+
+@pytest_asyncio.fixture
+async def status(session):
+    """Status default do seed ('nao_iniciada')."""
+    return await session.scalar(
+        select(Status).where(Status.code == 'nao_iniciada')
+    )
+
+
+@pytest_asyncio.fixture
+async def category(session):
+    """Categoria de exemplo do seed ('feature')."""
+    return await session.scalar(
+        select(Category).where(Category.code == 'feature')
+    )
 
 
 @contextmanager
@@ -129,5 +150,6 @@ class TodoFactory(factory.Factory):
 
     title = factory.Faker('text')
     description = factory.Faker('text')
-    state = factory.fuzzy.FuzzyChoice(TodoState)
+    # 1 == 'nao_iniciada' (primeiro item do seed inserido no fixture session).
+    status_id = 1
     user_id = 1

@@ -1,4 +1,10 @@
 from simple_todo.schemas.base import FilterPage, Message, Token
+from simple_todo.schemas.catalog import (
+    CategoryList,
+    CategoryPublic,
+    StatusList,
+    StatusPublic,
+)
 from simple_todo.schemas.todo import (
     FilterTodo,
     TodoList,
@@ -20,4 +26,8 @@ __all__ = [
     'TodoList',
     'TodoUpdate',
     'FilterTodo',
+    'StatusPublic',
+    'StatusList',
+    'CategoryPublic',
+    'CategoryList',
 ]

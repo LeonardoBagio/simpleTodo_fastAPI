@@ -1,14 +1,10 @@
 import { defineStore } from 'pinia'
-import type {
-  TodoCreate,
-  TodoPublic,
-  TodoState,
-  TodoUpdate,
-} from '~/types/api'
+import type { TodoCreate, TodoPublic, TodoUpdate } from '~/types/api'
 
 interface Filter {
   title: string
-  state: TodoState | ''
+  status_id: number | ''
+  category_id: number | ''
 }
 
 export const useTodosStore = defineStore('todos', {
@@ -17,13 +13,19 @@ export const useTodosStore = defineStore('todos', {
     loading: false,
     saving: false,
     loaded: false,
-    filter: { title: '', state: '' } as Filter,
+    filter: { title: '', status_id: '', category_id: '' } as Filter,
   }),
   getters: {
-    // Board rows in lifecycle order, honoring the active filter.
+    // Tarefas visíveis honrando os filtros ativos.
     visible(state): TodoPublic[] {
       return state.items.filter((t) => {
-        if (state.filter.state && t.state !== state.filter.state) return false
+        if (state.filter.status_id && t.status_id !== state.filter.status_id)
+          return false
+        if (
+          state.filter.category_id &&
+          t.category_id !== state.filter.category_id
+        )
+          return false
         if (
           state.filter.title &&
           !t.title.toLowerCase().includes(state.filter.title.toLowerCase())
@@ -32,16 +34,11 @@ export const useTodosStore = defineStore('todos', {
         return true
       })
     },
-    counts(state): Record<TodoState, number> {
-      const base: Record<TodoState, number> = {
-        draft: 0,
-        todo: 0,
-        doing: 0,
-        done: 0,
-        trash: 0,
-      }
-      for (const t of state.items) base[t.state]++
-      return base
+    // Contagem por status_id.
+    countByStatus(state): Record<number, number> {
+      const acc: Record<number, number> = {}
+      for (const t of state.items) acc[t.status_id] = (acc[t.status_id] ?? 0) + 1
+      return acc
     },
   },
   actions: {
@@ -82,15 +79,19 @@ export const useTodosStore = defineStore('todos', {
       return updated
     },
 
+    // Avança pelo fluxo curado (ver ADVANCE_FLOW em utils/states).
     async advance(todo: TodoPublic) {
-      const order: TodoState[] = ['draft', 'todo', 'doing', 'done']
-      const idx = order.indexOf(todo.state)
-      const next = idx >= 0 && idx < order.length - 1 ? order[idx + 1] : 'done'
-      return this.patch(todo.id, { state: next })
+      const catalog = useCatalogStore()
+      const current = catalog.statusById[todo.status_id]
+      const nextCode = advanceCode(current?.code ?? '')
+      if (!nextCode) return todo
+      const next = catalog.statusByCode[nextCode]
+      if (!next || next.id === todo.status_id) return todo
+      return this.patch(todo.id, { status_id: next.id })
     },
 
-    async setState(id: number, state: TodoState) {
-      return this.patch(id, { state })
+    async setStatus(id: number, status_id: number) {
+      return this.patch(id, { status_id })
     },
 
     async remove(id: number) {
@@ -101,7 +102,7 @@ export const useTodosStore = defineStore('todos', {
     reset() {
       this.items = []
       this.loaded = false
-      this.filter = { title: '', state: '' }
+      this.filter = { title: '', status_id: '', category_id: '' }
     },
   },
 })
