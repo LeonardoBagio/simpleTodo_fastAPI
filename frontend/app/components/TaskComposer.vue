@@ -151,7 +151,6 @@ function submit() {
 
       <div class="flex items-center justify-end gap-2">
         <button
-          v-if="editing"
           type="button"
           class="btn btn-outline text-xs"
           @click="emit('cancel')"

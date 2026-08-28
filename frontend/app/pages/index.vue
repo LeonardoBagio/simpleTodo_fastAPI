@@ -8,8 +8,21 @@ const catalog = useCatalogStore()
 const toast = useToasts()
 
 const editing = ref<TodoPublic | null>(null)
+const showComposer = ref(false)
 const busyId = ref<number | null>(null)
 const composer = ref<HTMLElement | null>(null)
+
+function openComposer() {
+  showComposer.value = true
+  nextTick(() =>
+    composer.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+  )
+}
+
+function onCancel() {
+  editing.value = null
+  showComposer.value = false
+}
 
 await useAsyncData('catalog', () => catalog.fetch(), { server: false })
 await useAsyncData('todos', () => todos.fetch(), { server: false })
@@ -49,6 +62,7 @@ async function onCreate(payload: {
 }) {
   try {
     await todos.create(payload)
+    showComposer.value = false
     toast.ok('Tarefa adicionada.')
   } catch (err) {
     toast.error(errMessage(err))
@@ -144,14 +158,19 @@ const categoryFilter = computed({
     </div>
 
     <!-- Composer -->
-    <div ref="composer">
+    <div v-if="showComposer || editing" ref="composer">
       <TaskComposer
         :editing="editing"
         :busy="todos.saving"
         @create="onCreate"
         @update="onUpdate"
-        @cancel="editing = null"
+        @cancel="onCancel"
       />
+    </div>
+    <div v-else>
+      <button type="button" class="btn btn-primary text-sm" @click="openComposer">
+        <Icon name="plus" :size="16" /> Nova tarefa
+      </button>
     </div>
 
     <!-- Controls: search + two filter selects (andamento, categoria) -->
@@ -208,7 +227,7 @@ const categoryFilter = computed({
         <p class="max-w-xs text-sm text-muted">
           {{
             todos.items.length === 0
-              ? 'Adicione a primeira tarefa no formulário acima para começar.'
+              ? 'Clique em “Nova tarefa” acima para adicionar a primeira.'
               : 'Ajuste a busca ou limpe os filtros para ver todas as tarefas.'
           }}
         </p>
