@@ -27,15 +27,15 @@ async function submit() {
 </script>
 
 <template>
-  <div class="plate p-6">
-    <div class="mb-5 flex items-center gap-2">
-      <span class="hazard-rule h-3 w-8 rounded-sm" />
-      <h1 class="engraved text-sm text-enamel-dim">Acesso ao console</h1>
+  <div class="card p-6 sm:p-7">
+    <div class="mb-5">
+      <h1 class="engraved text-[11px] text-muted">Acesso ao painel</h1>
+      <span class="divider mt-2" />
     </div>
 
     <form class="flex flex-col gap-4" @submit.prevent="submit">
       <label class="block">
-        <span class="engraved mb-1.5 block text-[10px] text-enamel-faint">E-mail</span>
+        <span class="engraved mb-1.5 block text-[10px] text-muted">E-mail</span>
         <input
           v-model="email"
           class="field"
@@ -47,7 +47,7 @@ async function submit() {
       </label>
 
       <label class="block">
-        <span class="engraved mb-1.5 block text-[10px] text-enamel-faint">Senha</span>
+        <span class="engraved mb-1.5 block text-[10px] text-muted">Senha</span>
         <input
           v-model="password"
           class="field"
@@ -58,16 +58,16 @@ async function submit() {
         />
       </label>
 
-      <button type="submit" class="btn-console btn-amber mt-1 justify-center" :disabled="busy">
+      <button type="submit" class="btn btn-primary mt-1 w-full" :disabled="busy">
         <Icon name="power" :size="16" />
-        {{ busy ? 'Ligando…' : 'Ligar console' }}
+        {{ busy ? 'Entrando…' : 'Entrar' }}
       </button>
     </form>
 
-    <p class="mt-5 border-t border-steel-700 pt-4 text-center text-sm text-enamel-dim">
+    <p class="mt-6 border-t border-black/[0.07] pt-4 text-center text-sm text-muted">
       Ainda sem acesso?
-      <NuxtLink to="/register" class="text-lamp-doing underline decoration-lamp-doing/40 hover:decoration-lamp-doing">
-        Registrar operador
+      <NuxtLink to="/register" class="font-semibold text-ink underline decoration-ink/30 hover:decoration-ink">
+        Criar conta
       </NuxtLink>
     </p>
   </div>

@@ -3,24 +3,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Enameled steel console
-        steel: {
-          950: '#141619',
-          900: '#191c20',
-          850: '#1e2228',
-          800: '#23272d',
-          700: '#2c313a',
-          600: '#373d47',
-          500: '#464d59',
-          400: '#5a6270',
-        },
-        // Engraved / enamel signage
-        enamel: {
-          DEFAULT: '#e9e3d4',
-          dim: '#a9b1bd',
-          faint: '#7c8593',
-        },
-        // Signal lamps — the color system IS the state
+        // === Portfolio monochrome system (canonical tokens) ===
+        // Black / white / grays only. Colour is reserved for the state lamps,
+        // exactly as the portfolio reserves colour for brand icons.
+        ink: '#1a1a1a', // primary text + dark accent
+        cloud: '#e5e5e5', // page ground
+        mist: '#999999', // decorative gray (dividers)
+        muted: '#5c5c5c', // secondary text on light (AA-safe)
+        surface: '#ffffff', // cards / raised faces
+
+        // Signal lamps — the ONLY chromatic accent, carries state meaning.
         lamp: {
           draft: '#7a8593',
           todo: '#4a9fd4',
@@ -28,19 +20,54 @@ export default {
           done: '#4bbd6b',
           trash: '#df5140',
         },
+
+        // === Legacy scale names, remapped to a light-neutral ramp ===
+        // Retained so existing markup (bg-steel-*, text-enamel-*) keeps working
+        // without a full class rename. Prefer the canonical tokens above in new
+        // code. steel = surfaces/borders, enamel = text.
+        steel: {
+          950: '#ffffff',
+          900: '#ffffff',
+          850: '#ffffff',
+          800: '#ffffff',
+          700: '#ececec',
+          600: '#e2e2e2',
+          500: '#cfcfcf',
+          400: '#999999',
+        },
+        enamel: {
+          DEFAULT: '#1a1a1a',
+          dim: '#5c5c5c',
+          faint: '#767676',
+        },
       },
       fontFamily: {
-        stencil: ['"Saira Stencil One"', 'system-ui', 'sans-serif'],
-        placard: ['"Saira Condensed"', 'system-ui', 'sans-serif'],
-        sans: ['Saira', 'system-ui', 'sans-serif'],
-        mono: ['"Spline Sans Mono"', 'ui-monospace', 'monospace'],
+        // Portfolio families: Montserrat (headings/labels) + Raleway (body).
+        head: ['Montserrat', 'system-ui', 'sans-serif'],
+        body: ['Raleway', 'system-ui', 'sans-serif'],
+        // Legacy aliases → mapped onto the two portfolio families.
+        stencil: ['Montserrat', 'system-ui', 'sans-serif'],
+        placard: ['Montserrat', 'system-ui', 'sans-serif'],
+        sans: ['Raleway', 'system-ui', 'sans-serif'],
+        // No mono in the portfolio — numeric readouts use Montserrat + tnum.
+        mono: ['Montserrat', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        // Portfolio radius scale
+        sm: '8px',
+        md: '16px',
+        lg: '24px',
+        pill: '999px',
       },
       boxShadow: {
-        cell: '0 1px 0 0 rgba(255,255,255,0.05) inset, 0 -1px 0 0 rgba(0,0,0,0.4) inset, 0 2px 4px rgba(0,0,0,0.35)',
-        raised:
-          '0 1px 0 0 rgba(255,255,255,0.08) inset, 0 14px 30px -12px rgba(0,0,0,0.7), 0 4px 10px rgba(0,0,0,0.4)',
-        console:
-          '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 24px 60px -30px rgba(0,0,0,0.8)',
+        // Portfolio elevation scale
+        sm: '0 2px 10px rgba(0,0,0,0.06)',
+        md: '0 12px 30px rgba(0,0,0,0.08)',
+        lg: '0 20px 45px rgba(0,0,0,0.14)',
+        // Legacy aliases → portfolio elevation
+        cell: '0 2px 10px rgba(0,0,0,0.06)',
+        raised: '0 12px 30px rgba(0,0,0,0.10)',
+        console: '0 2px 10px rgba(0,0,0,0.06)',
       },
       keyframes: {
         'lamp-pulse': {

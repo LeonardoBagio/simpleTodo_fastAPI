@@ -10,75 +10,80 @@ async function logout() {
   menuOpen.value = false
   await auth.logout()
   todos.reset()
-  toast.ok('Console desligado. Até logo.')
+  toast.ok('Sessão encerrada. Até logo.')
   await navigateTo('/login')
 }
 </script>
 
 <template>
   <div class="min-h-screen">
-    <header class="sticky top-0 z-30 border-b border-steel-700 bg-steel-900/85 backdrop-blur">
-      <div class="hazard-rule h-1 w-full opacity-80" />
-      <div class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
+    <!-- Dark fixed header (portfolio) -->
+    <header class="sticky top-0 z-30 border-b border-white/10 bg-black/90 backdrop-blur">
+      <div class="mx-auto flex h-[68px] max-w-[1120px] items-center gap-4 px-4 sm:px-6">
         <NuxtLink to="/" aria-label="Ir para o painel">
-          <Wordmark />
+          <Wordmark tone="dark" />
         </NuxtLink>
 
-        <nav class="ml-auto flex items-center gap-1">
+        <nav class="ml-auto flex items-center gap-2">
           <NuxtLink
             to="/"
-            class="btn-console text-xs"
-            :class="route.path === '/' ? 'btn-steel' : 'text-enamel-dim hover:text-enamel'"
+            class="hidden rounded-pill px-3.5 py-2 font-head text-xs font-bold uppercase tracking-[0.08em] transition-colors sm:inline-flex sm:items-center sm:gap-1.5"
+            :class="
+              route.path === '/'
+                ? 'bg-white text-ink'
+                : 'text-white/60 hover:text-white'
+            "
           >
-            <Icon name="gauge" :size="16" /> Painel
+            <Icon name="gauge" :size="15" /> Painel
           </NuxtLink>
 
           <div class="relative">
             <button
               type="button"
-              class="flex items-center gap-2 rounded-md border border-steel-600 bg-steel-800 py-1.5 pl-1.5 pr-2.5 transition-colors hover:border-steel-500"
+              class="flex items-center gap-2 rounded-pill border border-white/15 py-1.5 pl-1.5 pr-2.5 transition-colors hover:border-white/35"
               :aria-expanded="menuOpen"
               aria-haspopup="menu"
               @click="menuOpen = !menuOpen"
             >
               <span
-                class="grid h-7 w-7 place-items-center rounded font-mono text-xs font-semibold text-steel-900"
-                style="background: linear-gradient(180deg, #f7b73f, #f2a41c)"
+                class="grid h-7 w-7 place-items-center rounded-full bg-white font-head text-xs font-bold text-ink"
                 >{{ auth.initials }}</span
               >
-              <span class="hidden text-sm text-enamel sm:inline">{{
+              <span class="hidden text-sm text-white/85 sm:inline">{{
                 auth.user?.username
               }}</span>
-              <Icon name="chevron" :size="14" class="rotate-90 text-enamel-faint" />
+              <Icon name="chevron" :size="14" class="rotate-90 text-white/45" />
             </button>
 
             <Transition name="menu">
               <div
                 v-if="menuOpen"
-                class="absolute right-0 mt-2 w-48 overflow-hidden rounded-md border border-steel-600 bg-steel-800 shadow-raised"
+                class="card absolute right-0 mt-2 w-52 overflow-hidden !rounded-md p-0 shadow-lg"
                 role="menu"
                 @click="menuOpen = false"
               >
-                <div class="border-b border-steel-700 px-3 py-2.5">
-                  <p class="truncate text-sm text-enamel">{{ auth.user?.username }}</p>
-                  <p class="truncate font-mono text-[11px] text-enamel-faint">
+                <div class="border-b border-black/[0.07] px-4 py-3">
+                  <p class="truncate text-sm font-semibold text-ink">
+                    {{ auth.user?.username }}
+                  </p>
+                  <p class="truncate text-[11px] text-muted">
                     {{ auth.user?.email }}
                   </p>
                 </div>
                 <NuxtLink
                   to="/account"
-                  class="flex items-center gap-2.5 px-3 py-2.5 text-sm text-enamel-dim transition-colors hover:bg-steel-700 hover:text-enamel"
+                  class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted transition-colors hover:bg-cloud hover:text-ink"
                   role="menuitem"
                 >
                   <Icon name="user" :size="16" /> Minha conta
                 </NuxtLink>
                 <button
                   type="button"
-                  class="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-enamel-dim transition-colors hover:bg-lamp-trash/15 hover:text-lamp-trash"
+                  class="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-muted transition-colors hover:bg-lamp-trash/10 hover:text-lamp-trash"
                   role="menuitem"
                   @click="logout"
                 >
-                  <Icon name="power" :size="16" /> Desligar sessão
+                  <Icon name="power" :size="16" /> Sair
                 </button>
               </div>
             </Transition>
@@ -90,15 +95,17 @@ async function logout() {
     <!-- backdrop to close the menu -->
     <div v-if="menuOpen" class="fixed inset-0 z-20" @click="menuOpen = false" />
 
-    <main class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+    <main class="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 sm:py-12">
       <slot />
     </main>
 
-    <footer class="mx-auto max-w-5xl px-4 pb-8 sm:px-6">
-      <div class="flex items-center gap-3 border-t border-steel-800 pt-4 font-mono text-[11px] text-enamel-faint">
-        <span class="rivet" />
-        <span>SIMPLE·TODO CONSOLE</span>
-        <span class="ml-auto">FastAPI · Nuxt · JWT</span>
+    <!-- Dark footer (portfolio) -->
+    <footer class="mt-8 bg-black">
+      <div
+        class="mx-auto flex max-w-[1120px] flex-wrap items-center gap-3 px-4 py-6 text-[11px] text-white/45 sm:px-6"
+      >
+        <Wordmark tone="dark" compact />
+        <span class="ml-auto engraved tracking-[0.14em]">FastAPI · Nuxt · JWT</span>
       </div>
     </footer>
   </div>

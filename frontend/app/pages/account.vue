@@ -56,35 +56,36 @@ async function destroy() {
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-xl flex-col gap-6">
+  <div class="mx-auto flex max-w-xl flex-col gap-8">
     <div>
-      <h1 class="font-placard text-2xl font-bold uppercase tracking-[0.02em] text-enamel">
+      <h1 class="section-title text-[clamp(1.6rem,1.2rem+1.6vw,2.2rem)]">
         Minha conta
       </h1>
-      <p class="mt-1 font-mono text-xs text-enamel-faint">
-        Operador #{{ String(auth.user?.id ?? 0).padStart(4, '0') }}
+      <span class="divider mt-3" />
+      <p class="section-desc mt-3 tabular-nums">
+        Usuário #{{ String(auth.user?.id ?? 0).padStart(4, '0') }}
       </p>
     </div>
 
     <!-- Credentials -->
-    <form class="plate flex flex-col gap-4 p-6" @submit.prevent="save">
-      <div class="flex items-center gap-2">
-        <span class="hazard-rule h-3 w-8 rounded-sm" />
-        <h2 class="engraved text-xs text-enamel-dim">Credenciais</h2>
+    <form class="card flex flex-col gap-4 p-6 sm:p-7" @submit.prevent="save">
+      <div>
+        <h2 class="engraved text-[11px] text-muted">Credenciais</h2>
+        <span class="divider mt-2" />
       </div>
 
       <label class="block">
-        <span class="engraved mb-1.5 block text-[10px] text-enamel-faint">Usuário</span>
+        <span class="engraved mb-1.5 block text-[10px] text-muted">Usuário</span>
         <input v-model="username" class="field" type="text" required />
       </label>
 
       <label class="block">
-        <span class="engraved mb-1.5 block text-[10px] text-enamel-faint">E-mail</span>
+        <span class="engraved mb-1.5 block text-[10px] text-muted">E-mail</span>
         <input v-model="email" class="field" type="email" required />
       </label>
 
       <label class="block">
-        <span class="engraved mb-1.5 block text-[10px] text-enamel-faint">
+        <span class="engraved mb-1.5 block text-[10px] text-muted">
           Nova senha (obrigatória para salvar)
         </span>
         <input
@@ -94,14 +95,14 @@ async function destroy() {
           autocomplete="new-password"
           placeholder="••••••••"
         />
-        <span class="mt-1.5 block text-[11px] text-enamel-faint">
+        <span class="mt-1.5 block text-[11px] text-muted">
           O backend regrava a senha a cada atualização de conta, então informe a
           senha desejada para confirmar.
         </span>
       </label>
 
       <div class="flex justify-end">
-        <button type="submit" class="btn-console btn-amber text-sm" :disabled="busy">
+        <button type="submit" class="btn btn-primary text-sm" :disabled="busy">
           <Icon name="check" :size="16" />
           {{ busy ? 'Salvando…' : 'Salvar alterações' }}
         </button>
@@ -109,22 +110,20 @@ async function destroy() {
     </form>
 
     <!-- Danger zone -->
-    <section
-      class="rounded-md border border-lamp-trash/40 bg-lamp-trash/[0.06] p-6"
-    >
+    <section class="rounded-md border border-lamp-trash/35 bg-lamp-trash/[0.05] p-6 sm:p-7">
       <div class="flex items-center gap-2">
-        <AndonLamp state="trash" :size="13" />
-        <h2 class="engraved text-xs text-lamp-trash">Zona de risco</h2>
+        <span class="dot" style="--lamp: var(--lamp-trash)" />
+        <h2 class="engraved text-[11px]" style="color: #c0392b">Zona de risco</h2>
       </div>
-      <p class="mt-2 text-sm text-enamel-dim">
-        Excluir a conta remove o operador e é irreversível.
+      <p class="mt-2 text-sm text-muted">
+        Excluir a conta remove o usuário e é irreversível.
       </p>
 
       <div v-if="!confirmingDelete" class="mt-4">
         <button
           type="button"
-          class="btn-console text-xs"
-          style="color: #df5140; border: 1px solid rgba(223, 81, 64, 0.5)"
+          class="btn text-xs"
+          style="color: #c0392b; border: 1px solid rgba(223, 81, 64, 0.5)"
           @click="confirmingDelete = true"
         >
           <Icon name="trash" :size="15" /> Excluir minha conta
@@ -133,8 +132,8 @@ async function destroy() {
 
       <div v-else class="mt-4 flex flex-col gap-3">
         <label class="block">
-          <span class="mb-1.5 block text-[11px] text-enamel-dim"
-            >Digite <span class="font-mono text-lamp-trash">EXCLUIR</span> para confirmar</span
+          <span class="mb-1.5 block text-[11px] text-muted"
+            >Digite <span class="font-head font-bold" style="color: #c0392b">EXCLUIR</span> para confirmar</span
           >
           <input
             v-model="deleteConfirm"
@@ -147,15 +146,15 @@ async function destroy() {
         <div class="flex items-center gap-2">
           <button
             type="button"
-            class="btn-console btn-steel text-xs"
+            class="btn btn-outline text-xs"
             @click="(confirmingDelete = false), (deleteConfirm = '')"
           >
             Cancelar
           </button>
           <button
             type="button"
-            class="btn-console text-xs"
-            style="color: #fff; background: linear-gradient(180deg, #e5604f, #df5140)"
+            class="btn text-xs text-white"
+            style="background: #df5140"
             :disabled="deleting"
             @click="destroy"
           >

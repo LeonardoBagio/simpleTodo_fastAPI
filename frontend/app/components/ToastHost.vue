@@ -18,19 +18,19 @@ const lampFor: Record<string, string> = {
       <div
         v-for="t in toasts"
         :key="t.id"
-        class="pointer-events-auto flex max-w-sm items-center gap-3 rounded-md border border-steel-600 bg-steel-800 px-4 py-3 shadow-raised"
+        class="pointer-events-auto flex max-w-sm items-center gap-3 rounded-md border border-black/[0.08] bg-white px-4 py-3 shadow-lg"
       >
         <span
           class="h-2.5 w-2.5 flex-none rounded-full"
           :style="{
             background: lampFor[t.kind],
-            boxShadow: `0 0 8px ${lampFor[t.kind]}`,
+            boxShadow: `0 0 8px ${lampFor[t.kind]}55`,
           }"
         />
-        <span class="text-sm text-enamel">{{ t.message }}</span>
+        <span class="text-sm text-ink">{{ t.message }}</span>
         <button
           type="button"
-          class="ml-auto text-enamel-faint transition-colors hover:text-enamel"
+          class="ml-auto text-muted transition-colors hover:text-ink"
           aria-label="Fechar aviso"
           @click="dismiss(t.id)"
         >

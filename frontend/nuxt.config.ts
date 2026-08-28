@@ -32,14 +32,10 @@ export default defineNuxtConfig({
 
   googleFonts: {
     families: {
-      // Placards / engraved panel labels
-      'Saira Condensed': [500, 600, 700],
-      // Console wordmark
-      'Saira Stencil One': [400],
-      // Workhorse UI / content
-      Saira: [400, 500, 600, 700],
-      // Readouts, IDs, counts, timestamps
-      'Spline Sans Mono': [400, 500, 600],
+      // Headings, labels, buttons, numeric readouts (uppercase + tracking)
+      Montserrat: [400, 700, 900],
+      // Body / running text
+      Raleway: [400, 600, 700],
     },
     display: 'swap',
     download: true,
@@ -50,6 +46,7 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'pt-BR' },
       title: 'Simple Todo — Painel',
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -58,7 +55,7 @@ export default defineNuxtConfig({
           content:
             'Simple Todo — painel de controle das suas tarefas, com ciclo de estados draft, todo, doing, done e trash.',
         },
-        { name: 'theme-color', content: '#191c20' },
+        { name: 'theme-color', content: '#e5e5e5' },
       ],
     },
   },

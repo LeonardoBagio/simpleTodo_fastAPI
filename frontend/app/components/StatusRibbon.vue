@@ -14,7 +14,7 @@ function toggle(s: TodoState) {
 
 <template>
   <div
-    class="plate flex flex-wrap items-stretch gap-px overflow-hidden p-px"
+    class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5"
     role="group"
     aria-label="Leituras por estado"
   >
@@ -22,23 +22,25 @@ function toggle(s: TodoState) {
       v-for="s in LIFECYCLE"
       :key="s"
       type="button"
-      class="group flex min-w-[92px] flex-1 items-center gap-2.5 px-3 py-2 text-left transition-colors"
+      class="flex items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-all"
       :class="
         active === s
-          ? 'bg-steel-700'
-          : 'bg-steel-850 hover:bg-steel-800'
+          ? 'border-ink bg-ink text-white shadow-md'
+          : 'border-black/[0.08] bg-white text-ink shadow-sm hover:-translate-y-0.5 hover:shadow-md'
       "
       :aria-pressed="active === s"
       @click="toggle(s)"
     >
-      <AndonLamp :state="s" :size="13" />
-      <span class="leading-tight">
-        <span class="engraved block text-[10px] text-enamel-faint">{{
-          stateMeta(s).label
-        }}</span>
+      <AndonLamp :state="s" :size="12" />
+      <span class="min-w-0 leading-tight">
         <span
-          class="font-mono text-lg tabular-nums leading-none"
-          :class="active === s ? 'text-enamel' : 'text-enamel-dim'"
+          class="block font-head text-[9px] font-bold uppercase tracking-[0.1em]"
+          :class="active === s ? 'text-white/60' : 'text-muted'"
+          >{{ stateMeta(s).label }}</span
+        >
+        <span
+          class="font-head text-xl font-black tabular-nums leading-none"
+          :class="active === s ? 'text-white' : 'text-ink'"
           >{{ String(counts[s]).padStart(2, '0') }}</span
         >
       </span>

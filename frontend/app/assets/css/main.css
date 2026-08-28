@@ -2,87 +2,139 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================================
+   DESIGN TOKENS — Portfolio design language (portifolio_html/design.md)
+   Paleta monocromática (preto/branco/cinzas). A única cor vem das lâmpadas
+   de estado, tratadas como accent funcional — do mesmo modo que o portfólio
+   só colore ícones de marca. Tipografia fluida (clamp), escala base-8,
+   cards brancos com elevação suave, badges pill, animação de entrada.
+   ========================================================================= */
 :root {
-  --steel-950: #141619;
-  --steel-900: #191c20;
-  --steel-850: #1e2228;
-  --steel-800: #23272d;
-  --steel-700: #2c313a;
-  --steel-600: #373d47;
-  --steel-500: #464d59;
-  --enamel: #e9e3d4;
-  --enamel-dim: #a9b1bd;
+  /* Paleta base */
+  --color-black: #000000;
+  --color-ink: #1a1a1a;
+  --color-white: #ffffff;
+  --color-cloud: #e5e5e5;
+  --color-mist: #999999;
+
+  /* Aliases semânticos */
+  --bg-light: var(--color-cloud);
+  --bg-dark: var(--color-black);
+  --text-dark: var(--color-ink);
+  --text-light: var(--color-white);
+  --text-muted: var(--color-mist);
+  --text-muted-on-light: #5c5c5c;
+  --primary-accent: var(--color-ink);
+  --surface: var(--color-white);
+  --border-subtle: rgba(0, 0, 0, 0.07);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --border-subtle-dark: rgba(255, 255, 255, 0.12);
+
+  /* Elevação */
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 45px rgba(0, 0, 0, 0.14);
+  --shadow-dark: 0 10px 30px rgba(0, 0, 0, 0.45);
+
+  /* Raio */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* Espaçamento base-8 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+  --space-7: 64px;
+  --space-8: 96px;
+
+  /* Movimento */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.2s var(--ease);
+  --transition: 0.35s var(--ease);
+
+  /* Layout */
+  --header-h: 68px;
+  --content-max: 1120px;
+
+  /* Tipografia fluida */
+  --fs-xs: clamp(0.72rem, 0.69rem + 0.15vw, 0.8rem);
+  --fs-sm: clamp(0.82rem, 0.79rem + 0.15vw, 0.9rem);
+  --fs-base: clamp(0.9rem, 0.87rem + 0.15vw, 0.95rem);
+  --fs-md: clamp(1rem, 0.95rem + 0.25vw, 1.1rem);
+  --fs-lg: clamp(1.2rem, 1.05rem + 0.75vw, 1.4rem);
+  --fs-xl: clamp(1.7rem, 1.35rem + 1.75vw, 2.2rem);
+  --fs-2xl: clamp(2.1rem, 1.5rem + 3vw, 3.2rem);
+
+  --font-head: 'Montserrat', system-ui, sans-serif;
+  --font-body: 'Raleway', system-ui, sans-serif;
+
+  /* Lâmpadas de estado (accent funcional) */
   --lamp-draft: #7a8593;
   --lamp-todo: #4a9fd4;
   --lamp-doing: #f2a41c;
   --lamp-done: #4bbd6b;
   --lamp-trash: #df5140;
-  color-scheme: dark;
+
+  color-scheme: light;
 }
 
 @layer base {
   html {
-    background-color: var(--steel-950);
+    background-color: var(--bg-light);
+    scroll-behavior: smooth;
   }
 
   body {
-    background-color: var(--steel-900);
-    /* Brushed-steel grain + faint vertical seam of a bolted console panel */
-    background-image:
-      linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.012) 0 1px,
-        transparent 1px 3px
-      ),
-      radial-gradient(
-        140% 120% at 50% -10%,
-        rgba(90, 104, 122, 0.14),
-        transparent 60%
-      );
-    background-attachment: fixed;
-    color: var(--enamel);
-    font-family: Saira, system-ui, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
     font-feature-settings: 'tnum' 1;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     min-height: 100vh;
   }
 
-  /* --- Browser surfaces themed from the console palette --- */
   ::selection {
-    background: rgba(242, 164, 28, 0.32);
-    color: #fff;
+    background: rgba(0, 0, 0, 0.14);
+    color: var(--color-ink);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--steel-500) transparent;
+    scrollbar-color: var(--color-mist) transparent;
   }
   ::-webkit-scrollbar {
     width: 11px;
     height: 11px;
   }
   ::-webkit-scrollbar-track {
-    background: var(--steel-950);
+    background: var(--bg-light);
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--steel-600);
-    border: 3px solid var(--steel-950);
+    background: var(--color-mist);
+    border: 3px solid var(--bg-light);
     border-radius: 8px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--steel-500);
+    background: var(--text-muted-on-light);
   }
 
   :focus-visible {
-    outline: 2px solid var(--lamp-doing);
+    outline: 2px solid var(--color-ink);
     outline-offset: 2px;
   }
 
   input,
   textarea,
   select {
-    caret-color: var(--lamp-doing);
+    caret-color: var(--color-ink);
   }
 
   a {
@@ -92,122 +144,190 @@
 }
 
 @layer components {
-  /* Diagonal hazard stripes — the console's signature rule */
-  .hazard-rule {
-    background-image: repeating-linear-gradient(
-      -45deg,
-      var(--lamp-doing) 0 10px,
-      var(--steel-900) 10px 20px
-    );
+  /* ---- Seções (portfolio) ---- */
+  .section-title {
+    font-family: var(--font-head);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.1;
+    color: var(--text-dark);
+  }
+  .section-desc {
+    color: var(--text-muted-on-light);
+    font-size: var(--fs-sm);
+  }
+  /* Traço-acento curto sob os títulos */
+  .divider {
+    display: block;
+    width: 44px;
+    height: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--primary-accent);
   }
 
-  /* Engraved panel plate — a raised metal placard */
-  .plate {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 40%),
-      var(--steel-800);
-    border: 1px solid var(--steel-600);
-    border-top-color: var(--steel-500);
-    border-radius: 6px;
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
-      0 -1px 0 0 rgba(0, 0, 0, 0.4) inset,
-      0 2px 4px rgba(0, 0, 0, 0.35);
-  }
-
-  /* Rivet dot — decorative panel fastener */
-  .rivet {
-    width: 6px;
-    height: 6px;
-    border-radius: 9999px;
-    background: radial-gradient(
-      circle at 35% 30%,
-      var(--steel-400, #5a6270),
-      var(--steel-700) 70%
-    );
-    box-shadow:
-      0 1px 1px rgba(0, 0, 0, 0.6),
-      0 0 0 1px rgba(0, 0, 0, 0.3);
-  }
-
-  /* Engraved label lettering */
-  .engraved {
-    font-family: '"Saira Condensed"', sans-serif;
+  /* ---- Rótulo pequeno em caixa alta ---- */
+  .engraved,
+  .eyebrow {
+    font-family: var(--font-head);
+    font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
   }
 
-  /* Console button — machined, pressable */
-  .btn-console {
+  /* ---- Sistema de cards ---- */
+  .card,
+  .plate {
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  /* Card interativo: eleva no hover como os cards de projeto do portfólio */
+  .card-lift {
+    transition:
+      transform var(--transition),
+      box-shadow var(--transition),
+      border-color var(--transition);
+  }
+  .card-lift:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(0, 0, 0, 0.12);
+  }
+
+  /* ---- Badge / pill ---- */
+  .pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    font-family: 'Saira Condensed', sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+    gap: 0.4rem;
+    background: var(--bg-light);
+    border-radius: var(--radius-pill);
+    padding: 0.28rem 0.7rem;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    border-radius: 5px;
-    padding: 0.6rem 1.1rem;
-    transition:
-      transform 0.12s cubic-bezier(0.2, 0, 0.2, 1),
-      box-shadow 0.12s ease,
-      filter 0.12s ease;
+    color: var(--text-dark);
+    line-height: 1;
   }
-  .btn-console:active {
-    transform: translateY(1px);
-  }
-  .btn-amber {
-    color: #241a05;
-    background: linear-gradient(180deg, #f7b73f, var(--lamp-doing));
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.4) inset,
-      0 6px 16px -8px rgba(242, 164, 28, 0.8),
-      0 2px 4px rgba(0, 0, 0, 0.4);
-  }
-  .btn-amber:hover {
-    filter: brightness(1.06);
-  }
-  .btn-steel {
-    color: var(--enamel);
-    background: linear-gradient(180deg, var(--steel-600), var(--steel-700));
-    border: 1px solid var(--steel-500);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.06) inset,
-      0 2px 4px rgba(0, 0, 0, 0.35);
-  }
-  .btn-steel:hover {
-    filter: brightness(1.1);
+  /* Ponto de estado (accent funcional) */
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-pill);
+    flex: none;
+    background: var(--lamp, var(--color-mist));
   }
 
-  /* Console form field */
+  /* Marcador de lista quadrado (portfolio) */
+  .tick::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 0.6rem;
+    background: var(--primary-accent);
+    vertical-align: middle;
+  }
+
+  /* ---- Botões ---- */
+  .btn-console,
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-head);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: var(--radius-pill);
+    padding: 0.62rem 1.2rem;
+    transition:
+      transform 0.12s var(--ease),
+      box-shadow 0.2s ease,
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .btn-console:active,
+  .btn:active {
+    transform: translateY(1px);
+  }
+  /* Primário — ink sólido (accent primário do portfólio) */
+  .btn-primary,
+  .btn-amber {
+    color: var(--color-white);
+    background: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:hover,
+  .btn-amber:hover {
+    background: var(--color-black);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  /* Secundário — contorno sobre superfície clara */
+  .btn-outline,
+  .btn-steel {
+    color: var(--color-ink);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-outline:hover,
+  .btn-steel:hover {
+    background: var(--bg-light);
+    transform: translateY(-2px);
+  }
+
+  /* ---- Campo de formulário ---- */
   .field {
     width: 100%;
-    background: var(--steel-950);
-    border: 1px solid var(--steel-600);
-    border-radius: 5px;
-    color: var(--enamel);
-    padding: 0.62rem 0.8rem;
-    font-family: Saira, sans-serif;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) inset;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--color-ink);
+    padding: 0.68rem 0.85rem;
+    font-family: var(--font-body);
     transition:
       border-color 0.15s ease,
       box-shadow 0.15s ease;
   }
   .field::placeholder {
-    color: var(--enamel-dim);
-    opacity: 0.7;
+    color: var(--text-muted-on-light);
+    opacity: 0.65;
   }
   .field:focus {
     outline: none;
-    border-color: var(--lamp-doing);
-    box-shadow:
-      0 2px 5px rgba(0, 0, 0, 0.3) inset,
-      0 0 0 3px rgba(242, 164, 28, 0.16);
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+  }
+
+  /* ---- Animação de entrada (portfolio .reveal) ---- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition:
+      opacity var(--transition),
+      transform var(--transition);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
   *,
   *::before,
   *::after {

@@ -1,90 +1,99 @@
-# Design — Simple Todo (Andon Console)
+# Design — Simple Todo
 
-<!-- impeccable:design · seed a2de81e9 · mode: operate -->
+Repaginação visual alinhada ao **design system do portfólio**
+(`portifolio_html/design.md`): paleta monocromática (preto / branco / cinzas),
+tipografia fluida com Montserrat + Raleway, cards brancos com elevação suave,
+badges pill e animação de entrada. A única cor vem das **lâmpadas de estado**,
+tratadas como accent funcional — do mesmo modo que o portfólio só colore ícones
+de marca.
 
-Recorded from the shipped build, not from intentions. The frontend renders a
-personal task manager as an **industrial andon control panel**: the five-state
-lifecycle is a physical signal lamp, not a checkbox.
+Tokens em `tailwind.config.js` e espelhados como CSS vars em
+`app/assets/css/main.css`. O favicon é o mark **LB** (`public/favicon.svg`).
 
-## World
+## Paleta
 
-Enameled graphite steel console. The signal lamps are the whole color system;
-amber-on-graphite hazard stripes are the signature rule. Depth is real
-(offset + blur shadows, recessed fields, rivets), never flat costume.
+Monocromática. Use sempre os aliases semânticos.
 
-Physical scene that fixed dark-on-steel: an operator reading a live status
-panel, day to day — a lit console reads its own state at a glance.
-
-## Color tokens
-
-Defined in `tailwind.config.js` and mirrored as CSS vars in
-`app/assets/css/main.css`.
-
-| Token | Value | Role |
+| Token | Valor | Uso |
 |---|---|---|
-| `steel-950` | `#141619` | page ground / recessed field wells |
-| `steel-900` | `#191c20` | body panel |
-| `steel-850/800` | `#1e2228` / `#23272d` | plates, cells |
-| `steel-700/600/500` | `#2c313a` / `#373d47` / `#464d59` | raised faces, borders |
-| `enamel` | `#e9e3d4` | primary engraved text |
-| `enamel-dim` | `#a9b1bd` | secondary text (tinted cool, never flat gray) |
-| `enamel-faint` | `#7c8593` | mono metadata |
+| `ink` | `#1a1a1a` | texto primário + accent escuro (botões primários, mark) |
+| `cloud` | `#e5e5e5` | fundo da página |
+| `surface` | `#ffffff` | cards / superfícies elevadas |
+| `muted` | `#5c5c5c` | texto secundário sobre fundo claro (AA) |
+| `mist` | `#999999` | cinza decorativo (divisores, scrollbar) |
 
-**Signal lamps** (state = color, the core system):
+**Lâmpadas de estado** (único accent cromático — carrega significado):
 
-| State | Lamp | Status word | Lit |
+| Estado | Cor | Status | Ponto |
 |---|---|---|---|
-| `draft` | `#7a8593` gray | Standby | unlit bezel |
-| `todo` | `#4a9fd4` blue | Na fila | steady |
-| `doing` | `#f2a41c` amber | Em operação | **pulsing** |
-| `done` | `#4bbd6b` green | Concluído | steady |
-| `trash` | `#df5140` red | Descartada | steady, cell dimmed |
+| `draft` | `#7a8593` cinza | Standby | apagado |
+| `todo` | `#4a9fd4` azul | Na fila | aceso |
+| `doing` | `#f2a41c` âmbar | Em operação | **pulsante**, card com brilho |
+| `done` | `#4bbd6b` verde | Concluído | aceso, título riscado |
+| `trash` | `#df5140` vermelho | Descartada | aceso, card esmaecido |
 
-Amber `#f2a41c` doubles as the primary-action accent (console buttons) and the
-hazard-stripe color. Color strategy: **Committed** — steel owns the surface,
-lamps + amber carry meaning at full saturation.
+> Aliases legados `steel-*` (superfícies/bordas) e `enamel-*` (texto) foram
+> remapeados para o ramp neutro claro, para o markup existente continuar
+> funcionando. **Prefira os tokens canônicos acima em código novo.**
 
-## Type
+## Tipografia
 
-Self-hosted via `@nuxtjs/google-fonts` (no external CDN at runtime).
+Self-hosted via `@nuxtjs/google-fonts` (sem CDN em runtime).
 
-- **Saira Stencil One** — wordmark only (`.font-stencil`).
-- **Saira Condensed** — engraved placards, buttons, titles (`.font-placard`,
-  `.engraved`), uppercase, tracked `+0.14em`.
-- **Saira** — body / UI (`.font-sans`).
-- **Spline Sans Mono** — IDs (`#0004`), counts, timestamps (`.font-mono`,
-  `tnum`).
+- **Montserrat** (`--font-head`, `.font-head`) — títulos, rótulos, botões,
+  badges e leituras numéricas; caixa alta + tracking. Pesos 400/700/900.
+- **Raleway** (`--font-body`, padrão do `body`) — texto corrido. Pesos
+  400/600/700.
+- Escala fluida `--fs-*` com `clamp()`; numerais tabulares (`tnum`) em IDs,
+  contagens e datas.
 
-## Components
+## Componentes de estilo (`main.css`)
 
-- `AndonLamp` — the state lamp (radial bezel, glow on lit, flicker on `doing`).
-- `TaskCell` — metal placard: lamp + status, stencil title, description, mono
-  id + timestamp, quick actions (advance / edit / discard), and a hover/focus
-  **StateSelect** rail. The `doing` cell lifts and glows amber; the rest stay
-  flush; `trash` dims until hover.
-- `StateSelect` — segmented lamp radio for setting state.
-- `StatusRibbon` — per-state lit mono readouts (also filters the board).
-- `TaskComposer` — inline create/edit console (no modal).
-- `Wordmark`, `Icon` (authored SVG, one 1.7 stroke), `ToastHost`.
+- `.card` / `.plate` — superfície branca, `--radius-md`, borda sutil,
+  `--shadow-sm`. `.card-lift` adiciona a elevação de hover (`translateY(-6px)`
+  + `--shadow-lg`) dos cards de projeto do portfólio.
+- `.section-title` + `.divider` — cabeçalho de seção (Montserrat black caixa
+  alta) com o traço-acento curto.
+- `.pill` + `.dot` — badge neutro com ponto colorido de estado.
+- `.btn` / `.btn-primary` (ink sólido) / `.btn-outline` (contorno).
+- `.field` — input claro com foco em ink.
+- `.reveal` → `.is-visible` — animação de entrada via `v-reveal`
+  (`app/plugins/reveal.client.ts`, IntersectionObserver com fallback).
 
-## Layout & order
+## Componentes Vue
 
-- Status ribbon reads lifecycle order (`LIFECYCLE`: draft→trash).
-- The board grid leads with active work (`BOARD_ORDER`: doing→todo→draft→
-  done→trash), then most-recently updated — an operator sees live work first.
+- `Wordmark` — mark monocromático (tile ink/branco + medidor), prop `tone`
+  (`light` nas telas de auth, `dark` no header/footer).
+- `AndonLamp` — ponto de estado (aceso com brilho suave; `doing` pulsa).
+- `StateSelect` — pills segmentadas para escolher o estado.
+- `StatusRibbon` — grid de stat-cards por estado (também filtra o board).
+- `TaskCell` — card de tarefa estilo projeto: badge de estado, título
+  Montserrat, descrição, id + data, ações rápidas e o trilho `StateSelect`
+  revelado no hover. O card `doing` recebe brilho âmbar; `trash` esmaece.
+- `TaskComposer` — formulário-card de criar/editar. `Icon` — SVG autoral.
+  `ToastHost` — toasts em card claro.
 
-## Motion
+## Layout & ordem
 
-- `doing` lamp flickers (1.6s), damped, not snapped.
-- Active cell lift + glow on state change; toast slide-in; menu scale-in.
-- Everything collapses under `prefers-reduced-motion: reduce`.
+- Header e footer escuros (fixos), conteúdo claro entre eles — padrão do
+  portfólio. `max-width` 1120px.
+- Grid do board: `auto-fill` + `minmax(280px, 1fr)`, gap `--space-5`.
+- Ordem do ribbon = ciclo de vida (`LIFECYCLE`: draft→trash). Ordem do board
+  prioriza trabalho ativo (`BOARD_ORDER`: doing→todo→draft→done→trash), depois
+  o mais recente.
 
-## Browser surfaces
+## Acessibilidade & movimento
 
-Themed from the palette in `main.css`: selection (amber), scrollbars (steel),
-focus ring (amber `:focus-visible`), caret (amber). Tabular numerals on data.
+- Foco visível em ink (`:focus-visible`), contraste AA para texto secundário
+  (`muted #5c5c5c`).
+- Superfícies do navegador temáticas: seleção, scrollbar, caret.
+- Tudo colapsa sob `prefers-reduced-motion: reduce` (reveal, pulso, transições).
 
 ## Provenance
 
-No raster assets ship — all iconography is authored inline SVG. No stock or
-generated images. Demo board content (seed) is synthetic and replaceable.
+Sem assets raster além do favicon `LB` (reaproveitado do portfólio). Ícones são
+SVG autoral inline. Conteúdo de demonstração é sintético e substituível.
+
+> Nota: o comentário de contrato em `server/plugins/contract.ts` ainda descreve
+> a direção industrial ("andon") anterior — é um comentário invisível herdado
+> do fluxo impeccable e não afeta o render.

@@ -7,7 +7,7 @@ const emit = defineEmits<{ (e: 'update:modelValue', s: TodoState): void }>()
 
 <template>
   <div
-    class="inline-flex overflow-hidden rounded-[5px] border border-steel-600 bg-steel-950"
+    class="inline-flex flex-wrap gap-1.5"
     role="radiogroup"
     aria-label="Definir estado"
   >
@@ -18,22 +18,16 @@ const emit = defineEmits<{ (e: 'update:modelValue', s: TodoState): void }>()
       role="radio"
       :aria-checked="props.modelValue === s"
       :title="stateMeta(s).label"
-      class="flex items-center gap-1.5 border-r border-steel-700 px-2.5 py-1.5 last:border-r-0 transition-colors"
+      class="inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 font-head text-[10px] font-bold uppercase tracking-[0.08em] transition-colors"
       :class="
         props.modelValue === s
-          ? 'bg-steel-700'
-          : 'bg-transparent hover:bg-steel-850'
+          ? 'border-ink bg-ink text-white'
+          : 'border-black/[0.12] bg-white text-muted hover:border-black/25 hover:text-ink'
       "
       @click="emit('update:modelValue', s)"
     >
-      <AndonLamp :state="s" :size="11" />
-      <span
-        class="engraved text-[10px]"
-        :class="
-          props.modelValue === s ? 'text-enamel' : 'text-enamel-faint'
-        "
-        >{{ stateMeta(s).label }}</span
-      >
+      <AndonLamp :state="s" :size="9" />
+      {{ stateMeta(s).label }}
     </button>
   </div>
 </template>

@@ -56,22 +56,22 @@ function submit() {
 
 <template>
   <form
-    class="plate p-4 sm:p-5"
-    :class="editing ? 'ring-1 ring-lamp-doing/40' : ''"
+    class="card p-5 sm:p-6 transition-shadow"
+    :class="editing ? 'ring-1 ring-ink/25' : ''"
     @submit.prevent="submit"
   >
-    <div class="mb-3 flex items-center gap-2">
-      <span class="hazard-rule h-3 w-8 rounded-sm" />
-      <h2 class="engraved text-xs text-enamel-dim">
-        {{ editing ? `Editando ordem #${String(editing.id).padStart(4, '0')}` : 'Nova ordem de serviço' }}
+    <div class="mb-4">
+      <h2 class="engraved text-[11px] text-muted">
+        {{ editing ? `Editando tarefa #${String(editing.id).padStart(4, '0')}` : 'Nova tarefa' }}
       </h2>
+      <span class="divider mt-2" />
     </div>
 
     <div class="flex flex-col gap-3">
       <input
         ref="titleEl"
         v-model="title"
-        class="field font-placard text-[15px] uppercase tracking-[0.03em]"
+        class="field font-head text-[15px] font-bold uppercase tracking-[0.02em]"
         type="text"
         maxlength="120"
         placeholder="Título da tarefa"
@@ -80,13 +80,13 @@ function submit() {
       <textarea
         v-model="description"
         class="field min-h-[64px] resize-y text-sm"
-        placeholder="Descrição / detalhes operacionais (opcional)"
+        placeholder="Descrição / detalhes (opcional)"
         aria-label="Descrição da tarefa"
       />
 
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex flex-col gap-1.5">
-          <span class="engraved text-[9px] text-enamel-faint">Estado inicial</span>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div class="flex flex-col gap-2">
+          <span class="engraved text-[9px] text-muted">Estado inicial</span>
           <StateSelect v-model="state" />
         </div>
 
@@ -94,18 +94,18 @@ function submit() {
           <button
             v-if="editing"
             type="button"
-            class="btn-console btn-steel text-xs"
+            class="btn btn-outline text-xs"
             @click="emit('cancel')"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            class="btn-console btn-amber text-sm"
+            class="btn btn-primary text-sm"
             :disabled="busy"
           >
             <Icon :name="editing ? 'check' : 'plus'" :size="16" />
-            {{ editing ? 'Salvar' : 'Registrar' }}
+            {{ editing ? 'Salvar' : 'Adicionar' }}
           </button>
         </div>
       </div>

@@ -105,17 +105,17 @@ async function onRemove(t: TodoPublic) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <!-- Console heading -->
-    <div class="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 class="font-placard text-2xl font-bold uppercase tracking-[0.02em] text-enamel">
-          Painel de operações
-        </h1>
-        <p class="mt-1 font-mono text-xs text-enamel-faint">
-          {{ activeCount }} ordem(ns) ativa(s) · {{ todos.counts.done }} concluída(s)
-        </p>
-      </div>
+  <div class="flex flex-col gap-8">
+    <!-- Section heading -->
+    <div>
+      <h1 class="section-title text-[clamp(1.6rem,1.2rem+1.6vw,2.2rem)]">
+        Painel de tarefas
+      </h1>
+      <span class="divider mt-3" />
+      <p class="section-desc mt-3">
+        {{ activeCount }} ativa(s) · {{ todos.counts.done }} concluída(s) ·
+        {{ todos.items.length }} no total
+      </p>
     </div>
 
     <!-- Composer -->
@@ -130,59 +130,60 @@ async function onRemove(t: TodoPublic) {
     </div>
 
     <!-- Controls: search + status ribbon -->
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-stretch">
-      <div class="relative lg:w-64">
-        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-enamel-faint">
+    <div class="flex flex-col gap-4">
+      <div class="relative sm:max-w-xs">
+        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
           <Icon name="search" :size="16" />
         </span>
         <input
           v-model="todos.filter.title"
           class="field pl-9"
           type="search"
-          placeholder="Localizar ordem…"
+          placeholder="Localizar tarefa…"
           aria-label="Filtrar por título"
         />
       </div>
-      <div class="min-w-0 flex-1">
-        <StatusRibbon
-          :counts="todos.counts"
-          :active="todos.filter.state"
-          @select="(s) => (todos.filter.state = s)"
-        />
-      </div>
+      <StatusRibbon
+        :counts="todos.counts"
+        :active="todos.filter.state"
+        @select="(s) => (todos.filter.state = s)"
+      />
     </div>
 
     <!-- Board -->
-    <section aria-label="Ordens de serviço">
+    <section aria-label="Tarefas">
       <!-- Loading -->
-      <div v-if="todos.loading && !todos.loaded" class="grid gap-3 sm:grid-cols-2">
+      <div
+        v-if="todos.loading && !todos.loaded"
+        class="grid gap-5 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]"
+      >
         <div
-          v-for="i in 4"
+          v-for="i in 6"
           :key="i"
-          class="h-28 animate-pulse rounded-md border border-steel-700 bg-steel-850"
+          class="h-40 animate-pulse rounded-md border border-black/[0.06] bg-white/70"
         />
       </div>
 
       <!-- Empty -->
       <div
         v-else-if="ordered.length === 0"
-        class="plate flex flex-col items-center gap-3 px-6 py-14 text-center"
+        class="card flex flex-col items-center gap-3 px-6 py-16 text-center"
       >
-        <div class="hazard-rule h-2 w-24 rounded-sm opacity-80" />
-        <p class="font-placard text-lg uppercase tracking-wide text-enamel">
-          {{ todos.items.length === 0 ? 'Painel sem ordens' : 'Nenhuma ordem no filtro' }}
+        <span class="divider" />
+        <p class="section-title text-lg">
+          {{ todos.items.length === 0 ? 'Sem tarefas ainda' : 'Nada no filtro' }}
         </p>
-        <p class="max-w-xs text-sm text-enamel-dim">
+        <p class="max-w-xs text-sm text-muted">
           {{
             todos.items.length === 0
-              ? 'Registre a primeira ordem de serviço no compositor acima para acender o painel.'
-              : 'Ajuste a busca ou limpe o filtro de estado para ver todas as ordens.'
+              ? 'Adicione a primeira tarefa no formulário acima para começar.'
+              : 'Ajuste a busca ou limpe o filtro de estado para ver todas as tarefas.'
           }}
         </p>
         <button
           v-if="todos.items.length > 0"
           type="button"
-          class="btn-console btn-steel text-xs"
+          class="btn btn-outline mt-1 text-xs"
           @click="(todos.filter.state = ''), (todos.filter.title = '')"
         >
           <Icon name="reset" :size="15" /> Limpar filtros
@@ -190,10 +191,14 @@ async function onRemove(t: TodoPublic) {
       </div>
 
       <!-- Grid -->
-      <div v-else class="grid items-start gap-3 sm:grid-cols-2">
+      <div
+        v-else
+        class="grid items-start gap-5 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]"
+      >
         <TaskCell
-          v-for="t in ordered"
+          v-for="(t, i) in ordered"
           :key="t.id"
+          v-reveal="Math.min(i * 55, 330)"
           :todo="t"
           :busy="busyId === t.id"
           @advance="onAdvance"

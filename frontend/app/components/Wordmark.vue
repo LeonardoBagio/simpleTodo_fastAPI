@@ -1,13 +1,19 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
+withDefaults(
+  defineProps<{ compact?: boolean; tone?: 'light' | 'dark' }>(),
+  { compact: false, tone: 'light' },
+)
 </script>
 
 <template>
   <span class="inline-flex items-center gap-2.5 select-none">
-    <!-- Console gauge mark -->
+    <!-- Monochrome gauge mark -->
     <span
-      class="relative grid place-items-center rounded-[7px] plate"
-      :class="compact ? 'h-8 w-8' : 'h-10 w-10'"
+      class="relative grid place-items-center rounded-[8px]"
+      :class="[
+        compact ? 'h-8 w-8' : 'h-10 w-10',
+        tone === 'dark' ? 'bg-white' : 'bg-ink',
+      ]"
     >
       <svg
         :width="compact ? 18 : 22"
@@ -18,28 +24,40 @@ withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
       >
         <path
           d="M4 16a8 8 0 0116 0"
-          stroke="#5a6270"
+          :stroke="tone === 'dark' ? '#1a1a1a' : '#ffffff'"
+          stroke-opacity="0.5"
           stroke-width="1.6"
           stroke-linecap="round"
         />
         <path
           d="M12 16l5-4.2"
-          stroke="#f2a41c"
+          :stroke="tone === 'dark' ? '#1a1a1a' : '#ffffff'"
           stroke-width="1.8"
           stroke-linecap="round"
         />
-        <circle cx="12" cy="16" r="1.7" fill="#f2a41c" />
+        <circle
+          cx="12"
+          cy="16"
+          r="1.7"
+          :fill="tone === 'dark' ? '#1a1a1a' : '#ffffff'"
+        />
       </svg>
     </span>
     <span class="leading-none">
       <span
-        class="block font-stencil text-enamel tracking-tight"
-        :class="compact ? 'text-[15px]' : 'text-lg'"
-        >Simple<span class="text-lamp-doing">·</span>Todo</span
+        class="block font-head font-black tracking-tight"
+        :class="[
+          compact ? 'text-[15px]' : 'text-lg',
+          tone === 'dark' ? 'text-white' : 'text-ink',
+        ]"
+        >Simple<span :class="tone === 'dark' ? 'text-white/50' : 'text-mist'"
+          >·</span
+        >Todo</span
       >
       <span
         v-if="!compact"
-        class="engraved block text-[9px] text-enamel-faint mt-0.5"
+        class="engraved block text-[9px] mt-0.5"
+        :class="tone === 'dark' ? 'text-white/55' : 'text-muted'"
         >Painel de controle de tarefas</span
       >
     </span>
