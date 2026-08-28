@@ -1,20 +1,33 @@
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
-from simple_todo.models import Todo, TodoState
+from simple_todo.models import Category, Status, Todo
 from tests.conftest import TodoFactory
 
 
-def test_create_todo(client, token):
+async def _status_id(session, code):
+    return await session.scalar(select(Status.id).where(Status.code == code))
+
+
+async def _category_id(session, code):
+    return await session.scalar(
+        select(Category.id).where(Category.code == code)
+    )
+
+
+def test_create_todo(client, token, status, category):
     response = client.post(
         '/todo/',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'title': 'Test todo',
             'description': 'Test todo description',
-            'state': 'draft',
+            'status_id': status.id,
+            'category_id': category.id,
+            'issue': 'GH-123',
         },
     )
 
@@ -23,12 +36,14 @@ def test_create_todo(client, token):
     assert data['id'] == 1
     assert data['title'] == 'Test todo'
     assert data['description'] == 'Test todo description'
-    assert data['state'] == 'draft'
+    assert data['status_id'] == status.id
+    assert data['category_id'] == category.id
+    assert data['issue'] == 'GH-123'
     assert 'created_at' in data
     assert 'updated_at' in data
 
 
-def test_create_todo_default_state(client, token):
+def test_create_todo_default_status(client, token, status):
     response = client.post(
         '/todo/',
         headers={'Authorization': f'Bearer {token}'},
@@ -39,7 +54,11 @@ def test_create_todo_default_state(client, token):
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json()['state'] == TodoState.todo.value
+    data = response.json()
+    # Sem status_id → cai no default 'nao_iniciada'.
+    assert data['status_id'] == status.id
+    assert data['category_id'] is None
+    assert data['issue'] is None
 
 
 def test_create_todo_without_token(client):
@@ -48,26 +67,11 @@ def test_create_todo_without_token(client):
         json={
             'title': 'Test todo',
             'description': 'Test todo description',
-            'state': 'draft',
         },
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.json() == {'detail': 'Not authenticated'}
-
-
-def test_create_todo_invalid_state(client, token):
-    response = client.post(
-        '/todo/',
-        headers={'Authorization': f'Bearer {token}'},
-        json={
-            'title': 'Test todo',
-            'description': 'Test todo description',
-            'state': 'invalid_state',
-        },
-    )
-
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 def test_list_todos_without_token(client):
@@ -109,12 +113,16 @@ async def test_list_todos_should_return_all_todos(
 async def test_list_todos_should_return_all_fields(
     session, client, user, token, mock_db_time
 ):
+    status_id = await _status_id(session, 'nao_iniciada')
+    category_id = await _category_id(session, 'feature')
     with mock_db_time(model=Todo) as time:
         todo = TodoFactory.create(
             user_id=user.id,
             title='Full field todo',
             description='Full field description',
-            state=TodoState.doing,
+            status_id=status_id,
+            category_id=category_id,
+            issue='JIRA-9',
         )
         session.add(todo)
         await session.commit()
@@ -131,7 +139,9 @@ async def test_list_todos_should_return_all_fields(
             'id': todo.id,
             'title': 'Full field todo',
             'description': 'Full field description',
-            'state': 'doing',
+            'status_id': status_id,
+            'category_id': category_id,
+            'issue': 'JIRA-9',
             'created_at': time.isoformat(),
             'updated_at': time.isoformat(),
         }
@@ -214,17 +224,39 @@ async def test_list_todos_filter_description(session, client, user, token):
 
 
 @pytest.mark.asyncio
-async def test_list_todos_filter_state(session, client, user, token):
+async def test_list_todos_filter_status(session, client, user, token):
+    done_id = await _status_id(session, 'concluido')
+    todo_id = await _status_id(session, 'nao_iniciada')
     session.add_all(
-        TodoFactory.create_batch(3, user_id=user.id, state=TodoState.done)
+        TodoFactory.create_batch(3, user_id=user.id, status_id=done_id)
     )
     session.add_all(
-        TodoFactory.create_batch(2, user_id=user.id, state=TodoState.todo)
+        TodoFactory.create_batch(2, user_id=user.id, status_id=todo_id)
     )
     await session.commit()
 
     response = client.get(
-        '/todo/?state=done',
+        f'/todo/?status_id={done_id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    expected_todos = 3
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()['todos']) == expected_todos
+
+
+@pytest.mark.asyncio
+async def test_list_todos_filter_category(
+    session, client, user, token, category
+):
+    session.add_all(
+        TodoFactory.create_batch(3, user_id=user.id, category_id=category.id)
+    )
+    session.add_all(TodoFactory.create_batch(2, user_id=user.id))
+    await session.commit()
+
+    response = client.get(
+        f'/todo/?category_id={category.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -235,13 +267,15 @@ async def test_list_todos_filter_state(session, client, user, token):
 
 @pytest.mark.asyncio
 async def test_list_todos_combined_filters(session, client, user, token):
+    doing_id = await _status_id(session, 'em_andamento')
+    other_id = await _status_id(session, 'nao_iniciada')
     session.add_all(
         TodoFactory.create_batch(
             2,
             user_id=user.id,
             title='Combined title',
             description='combined description',
-            state=TodoState.doing,
+            status_id=doing_id,
         )
     )
     session.add_all(
@@ -250,13 +284,13 @@ async def test_list_todos_combined_filters(session, client, user, token):
             user_id=user.id,
             title='Other title',
             description='other description',
-            state=TodoState.todo,
+            status_id=other_id,
         )
     )
     await session.commit()
 
     response = client.get(
-        '/todo/?title=Combined&description=combined&state=doing',
+        f'/todo/?title=Combined&description=combined&status_id={doing_id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -285,11 +319,15 @@ async def test_patch_todo(session, client, user, token):
 
 
 @pytest.mark.asyncio
-async def test_patch_todo_all_fields(session, client, user, token):
-    todo = TodoFactory(user_id=user.id, state=TodoState.todo)
+async def test_patch_todo_all_fields(
+    session, client, user, token, category
+):
+    todo = TodoFactory(user_id=user.id)
     session.add(todo)
     await session.commit()
     await session.refresh(todo)
+
+    done_id = await _status_id(session, 'concluido')
 
     response = client.patch(
         f'/todo/{todo.id}',
@@ -297,7 +335,9 @@ async def test_patch_todo_all_fields(session, client, user, token):
         json={
             'title': 'New title',
             'description': 'New description',
-            'state': 'done',
+            'status_id': done_id,
+            'category_id': category.id,
+            'issue': 'GH-777',
         },
     )
 
@@ -306,7 +346,9 @@ async def test_patch_todo_all_fields(session, client, user, token):
     assert data['id'] == todo.id
     assert data['title'] == 'New title'
     assert data['description'] == 'New description'
-    assert data['state'] == 'done'
+    assert data['status_id'] == done_id
+    assert data['category_id'] == category.id
+    assert data['issue'] == 'GH-777'
 
 
 def test_patch_todo_not_found(client, token):
@@ -398,12 +440,10 @@ def test_delete_todo_without_token(client):
 
 
 @pytest.mark.asyncio
-async def test_todo_state_out_of_enum(session, user):
-    todo = TodoFactory(user_id=user.id, state='invalid_state')
+async def test_todo_invalid_status_fk(session, user):
+    todo = TodoFactory(user_id=user.id, status_id=999)
     session.add(todo)
 
-    # No PostgreSQL o tipo ENUM é validado pelo banco na escrita: um valor
-    # fora de TodoState é rejeitado já no commit (invalid input value for
-    # enum todostate).
-    with pytest.raises(DBAPIError):
+    # status_id sem correspondência em statuses viola a FK no commit.
+    with pytest.raises(IntegrityError):
         await session.commit()

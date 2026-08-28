@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from simple_todo.database import get_session
-from simple_todo.models import Todo, User
+from simple_todo.models import Status, Todo, User
 from simple_todo.schemas import (
     FilterTodo,
     Message,
@@ -29,11 +29,20 @@ async def create_todo(
     user: CurrentUser,
     session: Session,
 ):
+    status_id = todo.status_id
+    if status_id is None:
+        # Sem status informado → cai no default 'nao_iniciada'.
+        status_id = await session.scalar(
+            select(Status.id).where(Status.code == 'nao_iniciada')
+        )
+
     db_todo = Todo(
         user_id=user.id,
         title=todo.title,
         description=todo.description,
-        state=todo.state,
+        status_id=status_id,
+        category_id=todo.category_id,
+        issue=todo.issue,
     )
 
     session.add(db_todo)
@@ -59,8 +68,11 @@ async def list_todos(
             Todo.description.contains(todo_filter.description)
         )
 
-    if todo_filter.state:
-        query = query.filter(Todo.state == todo_filter.state)
+    if todo_filter.status_id:
+        query = query.filter(Todo.status_id == todo_filter.status_id)
+
+    if todo_filter.category_id:
+        query = query.filter(Todo.category_id == todo_filter.category_id)
 
     todos = await session.scalars(
         query.offset(todo_filter.offset).limit(todo_filter.limit)

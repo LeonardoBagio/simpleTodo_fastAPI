@@ -1,18 +1,9 @@
 from datetime import datetime
-from enum import Enum
 
 from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from simple_todo.models.registry import table_registry
-
-
-class TodoState(str, Enum):
-    draft = 'draft'
-    todo = 'todo'
-    doing = 'doing'
-    done = 'done'
-    trash = 'trash'
 
 
 @table_registry.mapped_as_dataclass
@@ -22,8 +13,12 @@ class Todo:
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     title: Mapped[str]
     description: Mapped[str]
-    state: Mapped[TodoState]
+    status_id: Mapped[int] = mapped_column(ForeignKey('statuses.id'))
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey('categories.id'), default=None
+    )
+    issue: Mapped[str | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(
         init=False, server_default=func.now()
     )

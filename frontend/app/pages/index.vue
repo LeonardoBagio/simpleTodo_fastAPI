@@ -1,39 +1,55 @@
 <script setup lang="ts">
-import type { TodoPublic, TodoState } from '~/types/api'
+import type { TodoPublic } from '~/types/api'
 
 useHead({ title: 'Simple Todo — Painel' })
 
 const todos = useTodosStore()
+const catalog = useCatalogStore()
 const toast = useToasts()
 
 const editing = ref<TodoPublic | null>(null)
 const busyId = ref<number | null>(null)
 const composer = ref<HTMLElement | null>(null)
 
+await useAsyncData('catalog', () => catalog.fetch(), { server: false })
 await useAsyncData('todos', () => todos.fetch(), { server: false })
 
-// Board order: active work first (see BOARD_ORDER), then most-recently touched.
+// Ordena por grupo do status (A fazer → Em andamento → Concluídos) e depois
+// pela edição mais recente.
 const ordered = computed(() =>
   [...todos.visible].sort((a, b) => {
-    const la = BOARD_ORDER.indexOf(a.state)
-    const lb = BOARD_ORDER.indexOf(b.state)
+    const ga = catalog.statusById[a.status_id]?.group
+    const gb = catalog.statusById[b.status_id]?.group
+    const la = GROUP_ORDER.indexOf(ga!)
+    const lb = GROUP_ORDER.indexOf(gb!)
     if (la !== lb) return la - lb
     return b.updated_at.localeCompare(a.updated_at)
   }),
 )
 
 const activeCount = computed(
-  () => todos.counts.draft + todos.counts.todo + todos.counts.doing,
+  () =>
+    todos.items.filter(
+      (t) => catalog.statusById[t.status_id]?.group !== 'concluidos',
+    ).length,
+)
+const doneCount = computed(
+  () =>
+    todos.items.filter(
+      (t) => catalog.statusById[t.status_id]?.group === 'concluidos',
+    ).length,
 )
 
 async function onCreate(payload: {
   title: string
   description: string
-  state: TodoState
+  status_id: number | null
+  category_id: number | null
+  issue: string | null
 }) {
   try {
     await todos.create(payload)
-    toast.ok('Ordem registrada no painel.')
+    toast.ok('Tarefa adicionada.')
   } catch (err) {
     toast.error(errMessage(err))
   }
@@ -43,13 +59,15 @@ async function onUpdate(payload: {
   id: number
   title: string
   description: string
-  state: TodoState
+  status_id: number
+  category_id: number | null
+  issue: string | null
 }) {
   const { id, ...rest } = payload
   try {
     await todos.patch(id, rest)
     editing.value = null
-    toast.ok('Ordem atualizada.')
+    toast.ok('Tarefa atualizada.')
   } catch (err) {
     toast.error(errMessage(err))
   }
@@ -66,7 +84,8 @@ async function onAdvance(t: TodoPublic) {
   busyId.value = t.id
   try {
     const r = await todos.advance(t)
-    toast.ok(`#${String(t.id).padStart(4, '0')} → ${stateMeta(r.state).label}`)
+    const label = catalog.statusById[r.status_id]?.label ?? ''
+    toast.ok(`#${String(t.id).padStart(4, '0')} → ${label}`)
   } catch (err) {
     toast.error(errMessage(err))
   } finally {
@@ -74,10 +93,10 @@ async function onAdvance(t: TodoPublic) {
   }
 }
 
-async function onSetState(payload: { id: number; state: TodoState }) {
+async function onSetStatus(payload: { id: number; status_id: number }) {
   busyId.value = payload.id
   try {
-    await todos.setState(payload.id, payload.state)
+    await todos.setStatus(payload.id, payload.status_id)
   } catch (err) {
     toast.error(errMessage(err))
   } finally {
@@ -88,13 +107,8 @@ async function onSetState(payload: { id: number; state: TodoState }) {
 async function onRemove(t: TodoPublic) {
   busyId.value = t.id
   try {
-    if (t.state === 'trash') {
-      await todos.remove(t.id)
-      toast.warn(`Ordem #${String(t.id).padStart(4, '0')} excluída.`)
-    } else {
-      await todos.setState(t.id, 'trash')
-      toast.warn('Ordem enviada ao descarte.')
-    }
+    await todos.remove(t.id)
+    toast.warn(`Tarefa #${String(t.id).padStart(4, '0')} excluída.`)
     if (editing.value?.id === t.id) editing.value = null
   } catch (err) {
     toast.error(errMessage(err))
@@ -102,6 +116,17 @@ async function onRemove(t: TodoPublic) {
     busyId.value = null
   }
 }
+
+// Proxies para os dropdowns coloridos: null = "todos" (filtro vazio '').
+const statusFilter = computed({
+  get: () => (todos.filter.status_id === '' ? null : todos.filter.status_id),
+  set: (v: number | null) => (todos.filter.status_id = v ?? ''),
+})
+const categoryFilter = computed({
+  get: () =>
+    todos.filter.category_id === '' ? null : todos.filter.category_id,
+  set: (v: number | null) => (todos.filter.category_id = v ?? ''),
+})
 </script>
 
 <template>
@@ -113,7 +138,7 @@ async function onRemove(t: TodoPublic) {
       </h1>
       <span class="divider mt-3" />
       <p class="section-desc mt-3">
-        {{ activeCount }} ativa(s) · {{ todos.counts.done }} concluída(s) ·
+        {{ activeCount }} ativa(s) · {{ doneCount }} concluída(s) ·
         {{ todos.items.length }} no total
       </p>
     </div>
@@ -129,9 +154,9 @@ async function onRemove(t: TodoPublic) {
       />
     </div>
 
-    <!-- Controls: search + status ribbon -->
-    <div class="flex flex-col gap-4">
-      <div class="relative sm:max-w-xs">
+    <!-- Controls: search + two filter selects (andamento, categoria) -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div class="relative sm:max-w-xs sm:flex-1">
         <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
           <Icon name="search" :size="16" />
         </span>
@@ -143,10 +168,17 @@ async function onRemove(t: TodoPublic) {
           aria-label="Filtrar por título"
         />
       </div>
-      <StatusRibbon
-        :counts="todos.counts"
-        :active="todos.filter.state"
-        @select="(s) => (todos.filter.state = s)"
+
+      <StateSelect
+        v-model="statusFilter"
+        all-label="Todos os andamentos"
+        class="w-full sm:w-auto"
+      />
+
+      <CategorySelect
+        v-model="categoryFilter"
+        all-label="Todas as categorias"
+        class="w-full sm:w-auto"
       />
     </div>
 
@@ -160,7 +192,7 @@ async function onRemove(t: TodoPublic) {
         <div
           v-for="i in 6"
           :key="i"
-          class="h-40 animate-pulse rounded-md border border-black/[0.06] bg-white/70"
+          class="h-44 animate-pulse rounded-md border border-black/[0.06] bg-white/70"
         />
       </div>
 
@@ -177,14 +209,18 @@ async function onRemove(t: TodoPublic) {
           {{
             todos.items.length === 0
               ? 'Adicione a primeira tarefa no formulário acima para começar.'
-              : 'Ajuste a busca ou limpe o filtro de estado para ver todas as tarefas.'
+              : 'Ajuste a busca ou limpe os filtros para ver todas as tarefas.'
           }}
         </p>
         <button
           v-if="todos.items.length > 0"
           type="button"
           class="btn btn-outline mt-1 text-xs"
-          @click="(todos.filter.state = ''), (todos.filter.title = '')"
+          @click="
+            (todos.filter.status_id = ''),
+              (todos.filter.category_id = ''),
+              (todos.filter.title = '')
+          "
         >
           <Icon name="reset" :size="15" /> Limpar filtros
         </button>
@@ -202,7 +238,7 @@ async function onRemove(t: TodoPublic) {
           :todo="t"
           :busy="busyId === t.id"
           @advance="onAdvance"
-          @state="onSetState"
+          @state="onSetStatus"
           @edit="startEdit"
           @remove="onRemove"
         />
